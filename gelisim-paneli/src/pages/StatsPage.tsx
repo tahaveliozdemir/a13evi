@@ -28,12 +28,58 @@ export default function StatsPage() {
   const { children, settings, loading } = useEvaluation();
   const { showToast } = useToast();
   const [selectedChild, setSelectedChild] = useState<string>('all');
+  const [dateFilter, setDateFilter] = useState<'all' | '7days' | '30days' | '90days'>('all');
+  const [performanceFilter, setPerformanceFilter] = useState<'all' | 'above' | 'below'>('all');
+  const [showArchived, setShowArchived] = useState(false);
 
   // Redirect if not admin
   if (!isAdmin && !loading) {
     navigate('/dashboard');
     return null;
   }
+
+  // Filter children based on filters
+  const filteredChildren = useMemo(() => {
+    if (!settings) return [];
+
+    let filtered = children;
+
+    // Filter by archived status
+    if (!showArchived) {
+      filtered = filtered.filter(child => !child.archived);
+    }
+
+    // Filter by date
+    if (dateFilter !== 'all') {
+      const now = new Date();
+      let daysAgo: number;
+      switch (dateFilter) {
+        case '7days': daysAgo = 7; break;
+        case '30days': daysAgo = 30; break;
+        case '90days': daysAgo = 90; break;
+        default: daysAgo = 0;
+      }
+      const cutoffDate = new Date(now.getTime() - daysAgo * 24 * 60 * 60 * 1000);
+
+      filtered = filtered.filter(child => {
+        if (!child.scores || child.scores.length === 0) return false;
+        const lastScoreDate = new Date(child.scores[0].date);
+        return lastScoreDate >= cutoffDate;
+      });
+    }
+
+    // Filter by performance
+    if (performanceFilter !== 'all') {
+      filtered = filtered.filter(child => {
+        const stats = calculateChildStats(child, settings);
+        if (stats.neutralAvg === null) return false;
+        const isAboveThreshold = stats.neutralAvg.average >= settings.threshold;
+        return performanceFilter === 'above' ? isAboveThreshold : !isAboveThreshold;
+      });
+    }
+
+    return filtered;
+  }, [children, settings, showArchived, dateFilter, performanceFilter]);
 
   // Export handlers
   const handleExportExcel = async () => {
@@ -255,19 +301,103 @@ export default function StatsPage() {
           </div>
         </div>
 
-        {/* Child Filter */}
-        <div className="card p-4 mb-6">
-          <label className="block text-sm font-medium mb-2">Çocuk Seç (Filtreleme)</label>
-          <select
-            value={selectedChild}
-            onChange={(e) => setSelectedChild(e.target.value)}
-            className="w-full md:w-96 px-4 py-2 bg-input-bg border border-input-border rounded-lg focus:ring-2 focus:ring-accent transition"
-          >
-            <option value="all">Tüm Çocuklar</option>
-            {children.map(child => (
-              <option key={child.id} value={child.id}>{child.name}</option>
-            ))}
-          </select>
+        {/* Advanced Filters */}
+        <div className="card p-6 mb-6">
+          <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+            </svg>
+            Gelişmiş Filtreler
+          </h2>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Child Filter */}
+            <div>
+              <label className="block text-sm font-medium mb-2">Çocuk</label>
+              <select
+                value={selectedChild}
+                onChange={(e) => setSelectedChild(e.target.value)}
+                className="w-full px-4 py-2 bg-input-bg border border-input-border rounded-lg focus:ring-2 focus:ring-accent transition"
+              >
+                <option value="all">Tüm Çocuklar</option>
+                {filteredChildren.map(child => (
+                  <option key={child.id} value={child.id}>{child.name}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Date Filter */}
+            <div>
+              <label className="block text-sm font-medium mb-2">Tarih Aralığı</label>
+              <select
+                value={dateFilter}
+                onChange={(e) => setDateFilter(e.target.value as any)}
+                className="w-full px-4 py-2 bg-input-bg border border-input-border rounded-lg focus:ring-2 focus:ring-accent transition"
+              >
+                <option value="all">Tüm Zamanlar</option>
+                <option value="7days">Son 7 Gün</option>
+                <option value="30days">Son 30 Gün</option>
+                <option value="90days">Son 90 Gün</option>
+              </select>
+            </div>
+
+            {/* Performance Filter */}
+            <div>
+              <label className="block text-sm font-medium mb-2">Performans</label>
+              <select
+                value={performanceFilter}
+                onChange={(e) => setPerformanceFilter(e.target.value as any)}
+                className="w-full px-4 py-2 bg-input-bg border border-input-border rounded-lg focus:ring-2 focus:ring-accent transition"
+              >
+                <option value="all">Tümü</option>
+                <option value="above">Eşik Üstü</option>
+                <option value="below">Eşik Altı</option>
+              </select>
+            </div>
+
+            {/* Archived Filter */}
+            <div>
+              <label className="block text-sm font-medium mb-2">Arşiv</label>
+              <button
+                onClick={() => setShowArchived(!showArchived)}
+                className={`w-full px-4 py-2 rounded-lg font-medium transition flex items-center justify-center gap-2 ${
+                  showArchived
+                    ? 'bg-accent text-white'
+                    : 'bg-input-bg border border-input-border hover:bg-gray-500/10'
+                }`}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                </svg>
+                {showArchived ? 'Gösteriliyor' : 'Gizli'}
+              </button>
+            </div>
+          </div>
+
+          {/* Active Filters Summary */}
+          {(dateFilter !== 'all' || performanceFilter !== 'all' || showArchived) && (
+            <div className="mt-4 flex flex-wrap gap-2">
+              <span className="text-sm text-text-muted">Aktif Filtreler:</span>
+              {dateFilter !== 'all' && (
+                <span className="px-3 py-1 bg-accent/10 text-accent rounded-full text-sm flex items-center gap-1">
+                  {dateFilter === '7days' ? 'Son 7 Gün' : dateFilter === '30days' ? 'Son 30 Gün' : 'Son 90 Gün'}
+                  <button onClick={() => setDateFilter('all')} className="hover:text-accent-hover">×</button>
+                </span>
+              )}
+              {performanceFilter !== 'all' && (
+                <span className="px-3 py-1 bg-accent/10 text-accent rounded-full text-sm flex items-center gap-1">
+                  {performanceFilter === 'above' ? 'Eşik Üstü' : 'Eşik Altı'}
+                  <button onClick={() => setPerformanceFilter('all')} className="hover:text-accent-hover">×</button>
+                </span>
+              )}
+              {showArchived && (
+                <span className="px-3 py-1 bg-accent/10 text-accent rounded-full text-sm flex items-center gap-1">
+                  Arşiv Gösteriliyor
+                  <button onClick={() => setShowArchived(false)} className="hover:text-accent-hover">×</button>
+                </span>
+              )}
+            </div>
+          )}
         </div>
 
         {children.length === 0 ? (
