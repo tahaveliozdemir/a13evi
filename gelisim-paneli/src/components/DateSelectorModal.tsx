@@ -8,7 +8,6 @@ interface DateSelectorModalProps {
 
 export default function DateSelectorModal({ isOpen, onClose, onSelect }: DateSelectorModalProps) {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
-  const [hasExistingData, setHasExistingData] = useState(false);
 
   if (!isOpen) return null;
 
@@ -43,12 +42,6 @@ export default function DateSelectorModal({ isOpen, onClose, onSelect }: DateSel
             className="w-full px-4 py-3 bg-input-bg border border-input-border rounded-lg focus:ring-2 focus:ring-accent transition text-lg"
           />
         </div>
-
-        {hasExistingData && (
-          <div className="mb-6 p-3 bg-yellow-500/10 border border-yellow-500/50 text-yellow-600 dark:text-yellow-400 rounded-lg text-sm">
-            ⚠️ Bu tarihte kayıt mevcut. Düzenlemek istediğinize emin misiniz?
-          </div>
-        )}
 
         <div className="flex gap-4">
           <button

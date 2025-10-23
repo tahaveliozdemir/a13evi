@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import type { Child, AppSettings, UnsavedChanges } from '../types';
 import { calculateChildStats, getAverageColor } from '../utils/calculations';
 
@@ -48,7 +47,7 @@ export default function ChildCard({
             </span>
             <span>
               Nötr Ort: <strong className={getAverageColor(stats.neutralAvg?.average || null)}>
-                {stats.neutralAvg?.average !== null ? stats.neutralAvg.average.toFixed(2) : '-'}
+                {stats.neutralAvg && stats.neutralAvg.average !== null ? stats.neutralAvg.average.toFixed(2) : '-'}
               </strong>
             </span>
           </div>

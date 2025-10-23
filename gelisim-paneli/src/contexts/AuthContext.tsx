@@ -1,10 +1,10 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import {
   signInAnonymously,
   signInWithEmailAndPassword,
   signOut as firebaseSignOut,
   onAuthStateChanged,
-  User
+  type User
 } from 'firebase/auth';
 import { auth } from '../services/firebase';
 import type { AuthUser } from '../types';

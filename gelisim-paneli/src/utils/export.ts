@@ -11,16 +11,20 @@ export function exportToExcel(children: Child[], settings: AppSettings) {
   const data = children.map(child => {
     const stats = calculateChildStats(child, settings);
 
+    // Build period columns from settings
+    const periodColumns = settings.periods.reduce((acc, periodDef, index) => {
+      const periodStat = stats.periods[index];
+      acc[periodDef.name] = periodStat?.achieved ? 'Kazandı' : 'Devam Ediyor';
+      return acc;
+    }, {} as Record<string, string>);
+
     return {
       'İsim': child.name,
       'Toplam Değerlendirme': child.scores?.length || 0,
-      'Nötr Ortalama': stats.neutralAvg?.toFixed(2) || '-',
+      'Nötr Ortalama': stats.neutralAvg?.average.toFixed(2) || '-',
       'Normal Ortalama': stats.normalAvg?.toFixed(2) || '-',
-      'Durum': (stats.neutralAvg || 0) >= settings.threshold ? 'Başarılı' : 'Gelişmeli',
-      ...stats.periods.reduce((acc, period) => {
-        acc[period.name] = period.achieved ? 'Kazandı' : 'Devam Ediyor';
-        return acc;
-      }, {} as Record<string, string>)
+      'Durum': (stats.neutralAvg?.average || 0) >= settings.threshold ? 'Başarılı' : 'Gelişmeli',
+      ...periodColumns
     };
   });
 
@@ -145,8 +149,8 @@ export function exportToPDF(children: Child[], settings: AppSettings) {
     }
 
     const stats = calculateChildStats(child, settings);
-    const avg = stats.neutralAvg?.toFixed(2) || '-';
-    const status = (stats.neutralAvg || 0) >= settings.threshold ? 'Başarılı' : 'Gelişmeli';
+    const avg = stats.neutralAvg?.average.toFixed(2) || '-';
+    const status = (stats.neutralAvg?.average || 0) >= settings.threshold ? 'Başarılı' : 'Gelişmeli';
 
     doc.text(`${index + 1}. ${child.name}`, 20, yPos);
     doc.text(`Ortalama: ${avg}`, 100, yPos);
@@ -196,11 +200,11 @@ export function exportDetailedPDF(child: Child, settings: AppSettings) {
   doc.setFontSize(10);
   doc.text(`Toplam Değerlendirme: ${child.scores?.length || 0}`, 20, yPos);
   yPos += lineHeight;
-  doc.text(`Nötr Ortalama: ${stats.neutralAvg?.toFixed(2) || '-'}`, 20, yPos);
+  doc.text(`Nötr Ortalama: ${stats.neutralAvg?.average.toFixed(2) || '-'}`, 20, yPos);
   yPos += lineHeight;
   doc.text(`Normal Ortalama: ${stats.normalAvg?.toFixed(2) || '-'}`, 20, yPos);
   yPos += lineHeight;
-  doc.text(`Durum: ${(stats.neutralAvg || 0) >= settings.threshold ? 'Başarılı' : 'Gelişmeli'}`, 20, yPos);
+  doc.text(`Durum: ${(stats.neutralAvg?.average || 0) >= settings.threshold ? 'Başarılı' : 'Gelişmeli'}`, 20, yPos);
   yPos += lineHeight * 2;
 
   // Achievements
@@ -210,9 +214,12 @@ export function exportDetailedPDF(child: Child, settings: AppSettings) {
     yPos += lineHeight;
 
     doc.setFontSize(10);
-    stats.periods.forEach(period => {
-      doc.text(`${period.name}: ${period.achieved ? 'Kazandı ✓' : 'Devam Ediyor'}`, 20, yPos);
-      yPos += lineHeight;
+    settings.periods.forEach((periodDef, index) => {
+      const periodStat = stats.periods[index];
+      if (periodStat) {
+        doc.text(`${periodDef.name}: ${periodStat.achieved ? 'Kazandı ✓' : 'Devam Ediyor'}`, 20, yPos);
+        yPos += lineHeight;
+      }
     });
     yPos += lineHeight;
   }

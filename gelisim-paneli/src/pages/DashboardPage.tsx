@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useEvaluation } from '../contexts/EvaluationContext';
@@ -55,11 +55,11 @@ export default function DashboardPage() {
   if (settings && children.length > 0) {
     // Calculate average score across all children
     const childrenStats = children.map(child => calculateChildStats(child, settings));
-    const totalAvg = childrenStats.reduce((sum, s) => sum + (s.neutralAvg || 0), 0);
+    const totalAvg = childrenStats.reduce((sum, s) => sum + (s.neutralAvg?.average || 0), 0);
     stats.averageScore = childrenStats.length > 0 ? totalAvg / childrenStats.length : 0;
 
     // Calculate success rate (above threshold)
-    const successfulChildren = childrenStats.filter(s => (s.neutralAvg || 0) >= settings.threshold);
+    const successfulChildren = childrenStats.filter(s => (s.neutralAvg?.average || 0) >= settings.threshold);
     stats.successRate = childrenStats.length > 0 ? (successfulChildren.length / childrenStats.length) * 100 : 0;
 
     // Get recent evaluations (last 7 days)
@@ -76,7 +76,7 @@ export default function DashboardPage() {
               childName: child.name,
               date: score.date,
               evaluator: score.evaluator,
-              avg: childStats.neutralAvg || 0
+              avg: childStats.neutralAvg?.average || 0
             });
           }
         });
@@ -94,7 +94,7 @@ export default function DashboardPage() {
     children.forEach(child => {
       const childStats = calculateChildStats(child, settings);
       if (childStats.neutralAvg !== null) {
-        topPerformers.push({ child, avg: childStats.neutralAvg });
+        topPerformers.push({ child, avg: childStats.neutralAvg.average });
       }
     });
     topPerformers.sort((a, b) => b.avg - a.avg);
@@ -255,20 +255,20 @@ export default function DashboardPage() {
                   <p className="text-text-muted text-center py-8">Henüz değerlendirme yok</p>
                 ) : (
                   <div className="space-y-3">
-                    {stats.recentEvaluations.map((eval, index) => (
+                    {stats.recentEvaluations.map((evaluation, index) => (
                       <div key={index} className="p-3 bg-input-bg rounded-lg border border-input-border">
                         <div className="flex items-center justify-between">
                           <div className="flex-1">
-                            <div className="font-medium">{eval.childName}</div>
+                            <div className="font-medium">{evaluation.childName}</div>
                             <div className="text-sm text-text-muted">
-                              {new Date(eval.date).toLocaleDateString('tr-TR')} • {eval.evaluator}
+                              {new Date(evaluation.date).toLocaleDateString('tr-TR')} • {evaluation.evaluator}
                             </div>
                           </div>
                           <div className="text-right">
                             <div className={`text-lg font-bold ${
-                              eval.avg >= (settings?.threshold || 3.25) ? 'text-emerald-500' : 'text-amber-500'
+                              evaluation.avg >= (settings?.threshold || 3.25) ? 'text-emerald-500' : 'text-amber-500'
                             }`}>
-                              {eval.avg.toFixed(2)}
+                              {evaluation.avg.toFixed(2)}
                             </div>
                           </div>
                         </div>

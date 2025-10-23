@@ -135,7 +135,7 @@ export default function ChildCardV2({
               </span>
               <span>
                 Nötr: <strong className={getAverageColor(stats.neutralAvg?.average || null)}>
-                  {stats.neutralAvg?.average !== null ? stats.neutralAvg.average.toFixed(2) : '-'}
+                  {stats.neutralAvg && stats.neutralAvg.average !== null ? stats.neutralAvg.average.toFixed(2) : '-'}
                 </strong>
               </span>
               {lastEvalDate && (
