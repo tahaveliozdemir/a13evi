@@ -4,7 +4,7 @@ import { useEvaluation } from '../contexts/EvaluationContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { formatDate } from '../utils/calculations';
-import { addChild, deleteChild } from '../services/childrenService';
+import { addChild, deleteChild, archiveChild, unarchiveChild } from '../services/childrenService';
 import ChildCardV2 from '../components/ChildCardV2';
 import DescriptionModal from '../components/DescriptionModal';
 import AddChildModal from '../components/AddChildModal';
@@ -37,6 +37,7 @@ export default function EvaluationPage() {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('az');
+  const [showArchived, setShowArchived] = useState(false);
   const [showAddChildModal, setShowAddChildModal] = useState(false);
   const [deleteModal, setDeleteModal] = useState<{
     isOpen: boolean;
@@ -116,6 +117,28 @@ export default function EvaluationPage() {
     }
   };
 
+  const handleArchiveChild = async (childId: string, childName: string) => {
+    try {
+      await archiveChild(childId);
+      await refreshChildren();
+      showToast(`${childName} arşivlendi!`, 'success');
+    } catch (error) {
+      showToast('Arşivleme sırasında hata oluştu!', 'error');
+      console.error(error);
+    }
+  };
+
+  const handleUnarchiveChild = async (childId: string, childName: string) => {
+    try {
+      await unarchiveChild(childId);
+      await refreshChildren();
+      showToast(`${childName} arşivden çıkarıldı!`, 'success');
+    } catch (error) {
+      showToast('Arşivden çıkarma sırasında hata oluştu!', 'error');
+      console.error(error);
+    }
+  };
+
   if (loading) {
     return <LoadingSpinner />;
   }
@@ -126,7 +149,13 @@ export default function EvaluationPage() {
 
   // Filter and sort children
   const filteredChildren = children
-    .filter(child => child.name.toLowerCase().includes(searchTerm.toLowerCase()))
+    .filter(child => {
+      // Filter by search term
+      const matchesSearch = child.name.toLowerCase().includes(searchTerm.toLowerCase());
+      // Filter by archived status
+      const matchesArchived = showArchived ? true : !child.archived;
+      return matchesSearch && matchesArchived;
+    })
     .sort((a, b) => {
       switch (sortBy) {
         case 'za':
@@ -178,7 +207,7 @@ export default function EvaluationPage() {
           </div>
         )}
 
-        {/* Search & Sort */}
+        {/* Search, Sort & Archive Filter */}
         <div className="flex flex-col md:flex-row gap-4 mb-6">
           <input
             type="search"
@@ -190,11 +219,27 @@ export default function EvaluationPage() {
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
-            className="px-4 py-3 bg-input-bg border border-input-border rounded-lg focus:ring-2 focus:ring-accent transition"
+            className="px-4 py-3 bg-input-bg border border-input-border rounded-lg focus:ring-2 focus:ring-accent transition w-full md:w-auto"
           >
             <option value="az">Alfabetik (A-Z)</option>
             <option value="za">Alfabetik (Z-A)</option>
           </select>
+          {isAdmin && (
+            <button
+              onClick={() => setShowArchived(!showArchived)}
+              className={`px-4 py-3 rounded-lg font-medium transition flex items-center justify-center gap-2 w-full md:w-auto ${
+                showArchived
+                  ? 'bg-accent text-white'
+                  : 'bg-gray-500/20 hover:bg-gray-500/30'
+              }`}
+              title={showArchived ? 'Arşivlileri gizle' : 'Arşivlileri göster'}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+              </svg>
+              {showArchived ? 'Arşiv: Açık' : 'Arşiv: Kapalı'}
+            </button>
+          )}
         </div>
 
         {/* Children List */}
@@ -223,6 +268,8 @@ export default function EvaluationPage() {
                 }}
                 isAdmin={isAdmin}
                 onDelete={() => setDeleteModal({ isOpen: true, childId: child.id, childName: child.name })}
+                onArchive={() => handleArchiveChild(child.id, child.name)}
+                onUnarchive={() => handleUnarchiveChild(child.id, child.name)}
                 onQuickFill={(score) => quickFillChild(child.id, score)}
                 onCopyLast={() => copyLastEvaluation(child.id)}
               />

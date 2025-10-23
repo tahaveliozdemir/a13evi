@@ -13,6 +13,8 @@ interface ChildCardV2Props {
   onDescriptionClick: (categoryIndex: number) => void;
   isAdmin: boolean;
   onDelete?: () => void;
+  onArchive?: () => void;
+  onUnarchive?: () => void;
   onQuickFill?: (score: number) => void;
   onCopyLast?: () => void;
 }
@@ -34,6 +36,8 @@ export default function ChildCardV2({
   onDescriptionClick,
   isAdmin,
   onDelete,
+  onArchive,
+  onUnarchive,
   onQuickFill,
   onCopyLast
 }: ChildCardV2Props) {
@@ -116,8 +120,16 @@ export default function ChildCardV2({
       <div className="p-6 pb-4">
         <div className="flex items-start justify-between mb-3">
           <div className="flex-1">
-            <div className="flex items-center gap-3 mb-2">
+            <div className="flex items-center gap-3 mb-2 flex-wrap">
               <h3 className="font-bold text-xl">{child.name}</h3>
+              {child.archived && (
+                <Badge variant="empty">
+                  <svg className="w-3 h-3 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                  </svg>
+                  Arşivlendi
+                </Badge>
+              )}
               <Badge variant={status.variant}>{status.label}</Badge>
               {trend && (
                 <span className={`text-lg ${trend.color}`} title={trend.label}>
@@ -183,11 +195,29 @@ export default function ChildCardV2({
               </svg>
             </button>
 
+            {/* Archive/Unarchive (Admin) */}
+            {isAdmin && (onArchive || onUnarchive) && (
+              <button
+                onClick={child.archived ? onUnarchive : onArchive}
+                className={`p-2 text-text-muted rounded-lg transition ${
+                  child.archived
+                    ? 'hover:text-emerald-500 hover:bg-emerald-500/10'
+                    : 'hover:text-amber-500 hover:bg-amber-500/10'
+                }`}
+                title={child.archived ? 'Arşivden Çıkar' : 'Arşivle'}
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                </svg>
+              </button>
+            )}
+
             {/* Delete (Admin) */}
             {isAdmin && onDelete && (
               <button
                 onClick={onDelete}
                 className="p-2 text-text-muted hover:text-red-500 hover:bg-red-500/10 rounded-lg transition"
+                title="Kalıcı Olarak Sil"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />

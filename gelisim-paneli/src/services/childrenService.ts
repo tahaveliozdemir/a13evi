@@ -81,6 +81,13 @@ export async function archiveChild(childId: string): Promise<void> {
 }
 
 /**
+ * Unarchive a child
+ */
+export async function unarchiveChild(childId: string): Promise<void> {
+  await updateChild(childId, { archived: false });
+}
+
+/**
  * Delete a child permanently
  */
 export async function deleteChild(childId: string): Promise<void> {
