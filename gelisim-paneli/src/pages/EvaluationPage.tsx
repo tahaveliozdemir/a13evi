@@ -30,6 +30,7 @@ export default function EvaluationPage() {
     quickFillChild,
     copyLastEvaluation,
     saveAll,
+    refreshChildren,
     hasUnsavedChanges
   } = useEvaluation();
 
@@ -171,7 +172,7 @@ export default function EvaluationPage() {
         {isAdmin && (
           <div className="mb-6">
             <button
-              onClick={() => showToast('Çocuk ekleme özelliği yakında...', 'info')}
+              onClick={() => setShowAddChildModal(true)}
               className="w-full md:w-auto bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition flex items-center justify-center gap-2"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
@@ -227,7 +228,7 @@ export default function EvaluationPage() {
                   });
                 }}
                 isAdmin={isAdmin}
-                onDelete={() => showToast('Silme özelliği yakında...', 'info')}
+                onDelete={() => setDeleteModal({ isOpen: true, childId: child.id, childName: child.name })}
                 onQuickFill={(score) => quickFillChild(child.id, score)}
                 onCopyLast={() => copyLastEvaluation(child.id)}
               />
@@ -275,6 +276,21 @@ export default function EvaluationPage() {
             ? unsavedChanges[descriptionModal.childId]?.descriptions?.[descriptionModal.categoryIndex] || ''
             : ''
         }
+      />
+
+      {/* Add Child Modal */}
+      <AddChildModal
+        isOpen={showAddChildModal}
+        onClose={() => setShowAddChildModal(false)}
+        onAdd={handleAddChild}
+      />
+
+      {/* Delete Child Modal */}
+      <DeleteChildModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal({ isOpen: false, childId: null, childName: '' })}
+        onConfirm={handleDeleteChild}
+        childName={deleteModal.childName}
       />
     </div>
   );
