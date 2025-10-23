@@ -3,6 +3,8 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useEvaluation } from '../contexts/EvaluationContext';
 import { useAuth } from '../contexts/AuthContext';
 import { formatDate } from '../utils/calculations';
+import ChildCard from '../components/ChildCard';
+import DescriptionModal from '../components/DescriptionModal';
 
 export default function EvaluationPage() {
   const location = useLocation();
@@ -17,12 +19,28 @@ export default function EvaluationPage() {
     loading,
     saving,
     setEvaluationInfo,
+    updateScore,
+    toggleAbsent,
+    updateDescription,
     saveAll,
     hasUnsavedChanges
   } = useEvaluation();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('az');
+  const [descriptionModal, setDescriptionModal] = useState<{
+    isOpen: boolean;
+    childId: string | null;
+    childName: string;
+    categoryIndex: number | null;
+    categoryName: string;
+  }>({
+    isOpen: false,
+    childId: null,
+    childName: '',
+    categoryIndex: null,
+    categoryName: ''
+  });
 
   // Get date and evaluator from navigation state
   useEffect(() => {
@@ -151,11 +169,25 @@ export default function EvaluationPage() {
             </div>
           ) : (
             filteredChildren.map(child => (
-              <div key={child.id} className="card p-6">
-                <h3 className="font-bold text-lg mb-4">{child.name}</h3>
-                <p className="text-text-muted text-sm">Puanlama UI yakında...</p>
-                {/* ChildCard component will go here */}
-              </div>
+              <ChildCard
+                key={child.id}
+                child={child}
+                settings={settings}
+                unsavedChanges={unsavedChanges[child.id] || { scores: {}, descriptions: {}, absent: false }}
+                onScoreClick={(catIndex, score) => updateScore(child.id, catIndex, score)}
+                onAbsentToggle={() => toggleAbsent(child.id)}
+                onDescriptionClick={(catIndex) => {
+                  setDescriptionModal({
+                    isOpen: true,
+                    childId: child.id,
+                    childName: child.name,
+                    categoryIndex: catIndex,
+                    categoryName: settings.categories[catIndex]
+                  });
+                }}
+                isAdmin={isAdmin}
+                onDelete={() => alert('Silme özelliği yakında...')}
+              />
             ))
           )}
         </div>
@@ -165,7 +197,7 @@ export default function EvaluationPage() {
           <button
             onClick={handleSave}
             disabled={saving}
-            className="fixed bottom-8 right-8 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-4 px-8 rounded-lg shadow-2xl transition flex items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="fixed bottom-8 right-8 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-4 px-8 rounded-lg shadow-2xl transition flex items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed z-50"
           >
             {saving ? (
               <>
@@ -184,6 +216,23 @@ export default function EvaluationPage() {
           </button>
         )}
       </div>
+
+      {/* Description Modal */}
+      <DescriptionModal
+        isOpen={descriptionModal.isOpen}
+        onClose={() => setDescriptionModal(prev => ({ ...prev, isOpen: false }))}
+        onSave={(description) => {
+          if (descriptionModal.childId !== null && descriptionModal.categoryIndex !== null) {
+            updateDescription(descriptionModal.childId, descriptionModal.categoryIndex, description);
+          }
+        }}
+        title={`${descriptionModal.childName} - ${descriptionModal.categoryName}`}
+        initialValue={
+          descriptionModal.childId && descriptionModal.categoryIndex !== null
+            ? unsavedChanges[descriptionModal.childId]?.descriptions?.[descriptionModal.categoryIndex] || ''
+            : ''
+        }
+      />
     </div>
   );
 }
