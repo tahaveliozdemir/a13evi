@@ -4,8 +4,11 @@ import { useEvaluation } from '../contexts/EvaluationContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { formatDate } from '../utils/calculations';
+import { addChild, deleteChild } from '../services/childrenService';
 import ChildCardV2 from '../components/ChildCardV2';
 import DescriptionModal from '../components/DescriptionModal';
+import AddChildModal from '../components/AddChildModal';
+import DeleteChildModal from '../components/DeleteChildModal';
 
 export default function EvaluationPage() {
   const location = useLocation();
@@ -32,6 +35,16 @@ export default function EvaluationPage() {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('az');
+  const [showAddChildModal, setShowAddChildModal] = useState(false);
+  const [deleteModal, setDeleteModal] = useState<{
+    isOpen: boolean;
+    childId: string | null;
+    childName: string;
+  }>({
+    isOpen: false,
+    childId: null,
+    childName: ''
+  });
   const [descriptionModal, setDescriptionModal] = useState<{
     isOpen: boolean;
     childId: string | null;
@@ -75,6 +88,30 @@ export default function EvaluationPage() {
       }
     }
     navigate('/dashboard');
+  };
+
+  const handleAddChild = async (name: string) => {
+    try {
+      await addChild(name);
+      await refreshChildren();
+      showToast(`${name} başarıyla eklendi!`, 'success');
+    } catch (error) {
+      showToast('Çocuk eklenirken hata oluştu!', 'error');
+      throw error;
+    }
+  };
+
+  const handleDeleteChild = async () => {
+    if (!deleteModal.childId) return;
+
+    try {
+      await deleteChild(deleteModal.childId);
+      await refreshChildren();
+      showToast(`${deleteModal.childName} silindi!`, 'success');
+    } catch (error) {
+      showToast('Çocuk silinirken hata oluştu!', 'error');
+      throw error;
+    }
   };
 
   if (loading) {
