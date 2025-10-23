@@ -4,6 +4,7 @@ import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import EvaluationPage from './pages/EvaluationPage';
 import SettingsPage from './pages/SettingsPage';
+import StatsPage from './pages/StatsPage';
 import ToastContainer from './components/ToastContainer';
 
 // Protected Route Component
@@ -81,6 +82,14 @@ function App() {
           element={
             <AdminRoute>
               <SettingsPage />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/stats"
+          element={
+            <AdminRoute>
+              <StatsPage />
             </AdminRoute>
           }
         />
