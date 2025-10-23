@@ -218,7 +218,7 @@ export default function ChildCardV2({
                 <button
                   key={score}
                   onClick={() => onQuickFill?.(score)}
-                  className="flex-1 py-1.5 rounded-lg font-bold text-sm transition-all hover:scale-105"
+                  className="flex-1 py-3 md:py-2 rounded-lg font-bold text-sm transition-all hover:scale-105"
                   style={{
                     backgroundColor: SCORE_COLORS[score as keyof typeof SCORE_COLORS].bg,
                     color: 'white'
@@ -267,7 +267,7 @@ export default function ChildCardV2({
                   </div>
                   <button
                     onClick={() => onDescriptionClick(catIndex)}
-                    className="p-1.5 hover:bg-input-bg rounded-lg transition"
+                    className="p-2 md:p-1.5 hover:bg-input-bg rounded-lg transition"
                     title={hasDescription ? "Not var" : "Not ekle"}
                   >
                     {hasDescription ? (
@@ -301,7 +301,7 @@ export default function ChildCardV2({
                         onClick={() => onScoreClick(catIndex, score)}
                         disabled={isAbsent}
                         className={`
-                          flex-1 py-2.5 rounded-lg font-bold transition-all
+                          flex-1 py-3 md:py-2.5 rounded-lg font-bold transition-all
                           border-2 relative overflow-hidden
                           ${isSelected
                             ? 'text-white transform scale-110 shadow-lg z-10'

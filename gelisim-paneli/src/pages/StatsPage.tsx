@@ -219,13 +219,13 @@ export default function StatsPage() {
         <div className="card p-6 mb-6">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold">Grafikler ve Trendler</h1>
-              <p className="text-text-muted mt-1">Detaylı analiz ve görselleştirme</p>
+              <h1 className="text-2xl sm:text-3xl font-bold">Grafikler ve Trendler</h1>
+              <p className="text-text-muted mt-1 text-sm sm:text-base">Detaylı analiz ve görselleştirme</p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto">
               <button
                 onClick={handleExportExcel}
-                className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg font-medium transition flex items-center gap-2"
+                className="bg-emerald-500 hover:bg-emerald-600 text-white px-3 sm:px-4 py-2 rounded-lg font-medium text-sm sm:text-base transition flex items-center justify-center gap-2"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
@@ -236,7 +236,7 @@ export default function StatsPage() {
               </button>
               <button
                 onClick={handleExportPDF}
-                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-medium transition flex items-center gap-2"
+                className="bg-red-500 hover:bg-red-600 text-white px-3 sm:px-4 py-2 rounded-lg font-medium text-sm sm:text-base transition flex items-center justify-center gap-2"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
@@ -247,7 +247,7 @@ export default function StatsPage() {
               </button>
               <button
                 onClick={() => navigate('/dashboard')}
-                className="bg-gray-500/20 hover:bg-gray-500/30 px-4 py-2 rounded-lg font-medium transition"
+                className="bg-gray-500/20 hover:bg-gray-500/30 px-3 sm:px-4 py-2 rounded-lg font-medium text-sm sm:text-base transition"
               >
                 Geri Dön
               </button>

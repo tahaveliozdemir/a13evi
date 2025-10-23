@@ -163,14 +163,14 @@ export default function SettingsPage() {
       <div className="max-w-7xl mx-auto p-4 md:p-8">
         {/* Header */}
         <div className="card p-6 mb-6">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold">Ayarlar</h1>
-              <p className="text-text-muted mt-1">Uygulama yapılandırmasını yönetin</p>
+              <h1 className="text-2xl sm:text-3xl font-bold">Ayarlar</h1>
+              <p className="text-text-muted mt-1 text-sm sm:text-base">Uygulama yapılandırmasını yönetin</p>
             </div>
             <button
               onClick={() => navigate('/dashboard')}
-              className="bg-gray-500/20 hover:bg-gray-500/30 px-4 py-2 rounded-lg font-medium transition"
+              className="bg-gray-500/20 hover:bg-gray-500/30 px-4 py-2 rounded-lg font-medium transition w-full sm:w-auto"
             >
               Geri Dön
             </button>
@@ -182,7 +182,7 @@ export default function SettingsPage() {
           <div className="flex gap-2">
             <button
               onClick={() => setActiveTab('categories')}
-              className={`flex-1 py-3 px-4 rounded-lg font-medium transition ${
+              className={`flex-1 py-3 px-2 sm:px-4 rounded-lg font-medium text-sm sm:text-base transition ${
                 activeTab === 'categories'
                   ? 'bg-accent text-white'
                   : 'bg-transparent hover:bg-gray-500/10'
@@ -192,7 +192,7 @@ export default function SettingsPage() {
             </button>
             <button
               onClick={() => setActiveTab('rules')}
-              className={`flex-1 py-3 px-4 rounded-lg font-medium transition ${
+              className={`flex-1 py-3 px-2 sm:px-4 rounded-lg font-medium text-sm sm:text-base transition ${
                 activeTab === 'rules'
                   ? 'bg-accent text-white'
                   : 'bg-transparent hover:bg-gray-500/10'
@@ -202,7 +202,7 @@ export default function SettingsPage() {
             </button>
             <button
               onClick={() => setActiveTab('periods')}
-              className={`flex-1 py-3 px-4 rounded-lg font-medium transition ${
+              className={`flex-1 py-3 px-2 sm:px-4 rounded-lg font-medium text-sm sm:text-base transition ${
                 activeTab === 'periods'
                   ? 'bg-accent text-white'
                   : 'bg-transparent hover:bg-gray-500/10'
