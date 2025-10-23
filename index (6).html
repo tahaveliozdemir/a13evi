@@ -1,0 +1,1669 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Çocuk Gelişim Takip Paneli</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <!-- Font Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --background: #f8fafc;
+            --foreground: #0f172a;
+            --card-bg: white;
+            --card-border: #e2e8f0;
+            --input-bg: #f1f5f9;
+            --input-border: #cbd5e1;
+            --accent: #2563eb;
+            --accent-hover: #1d4ed8;
+            --text-muted: #64748b;
+        }
+
+        html.dark {
+            --background: #020617;
+            --foreground: #f8fafc;
+            --card-bg: #0f172a;
+            --card-border: #1e293b;
+            --input-bg: #1e293b;
+            --input-border: #334155;
+            --accent: #60a5fa;
+            --accent-hover: #3b82f6;
+            --text-muted: #94a3b8;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--background);
+            color: var(--foreground);
+            transition: background-color 0.3s, color 0.3s;
+            touch-action: manipulation;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 1.25rem;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02), 0 2px 4px -2px rgba(0,0,0,0.02);
+            transition: background-color 0.3s, border-color 0.3s;
+        }
+
+        .modal-overlay {
+            background-color: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(8px);
+        }
+
+        .score-option {
+            transition: all 0.2s ease-in-out;
+            border: 2px solid var(--input-border);
+        }
+
+        .score-option.selected {
+            color: white;
+            font-weight: bold;
+            transform: scale(1.05);
+            box-shadow: 0 4px 14px 0 rgba(0,0,0, 0.15);
+        }
+
+        .sticky-header {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background-color: var(--background);
+            border-bottom: 1px solid var(--card-border);
+            backdrop-filter: blur(10px);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+        }
+
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 9999;
+            transform: translateX(120%);
+            transition: transform 0.3s ease-out;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .child-card {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .child-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #2563eb, #60a5fa);
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.3s ease;
+        }
+
+        .child-card.saved::before {
+            transform: scaleX(1);
+        }
+
+        input:focus, select:focus, textarea:focus, button:focus {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+        }
+
+        .error-highlight {
+            border-color: #ef4444 !important;
+            animation: shake 0.5s;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- LOADING SCREEN -->
+    <div id="loading-screen" class="fixed inset-0 bg-slate-900/50 backdrop-blur-md flex items-center justify-center z-[9999]">
+        <div class="flex flex-col items-center">
+            <svg class="animate-spin h-12 w-12 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span class="text-lg font-medium text-white/80 mt-4">Yükleniyor...</span>
+        </div>
+    </div>
+
+    <!-- MAIN APP CONTAINER -->
+    <div id="app" class="hidden opacity-0 transition-opacity duration-500">
+
+        <!-- STICKY HEADER -->
+        <header class="sticky-header p-4 md:p-6">
+            <div class="max-w-7xl mx-auto flex justify-between items-center">
+                <div>
+                    <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight">Gelişim Paneli</h1>
+                    <p id="auth-status" class="text-sm text-text-muted mt-1"></p>
+                </div>
+                <div class="flex items-center gap-2 md:gap-4">
+                    <div id="auth-controls"></div>
+                    <button id="theme-toggle" class="w-10 h-10 flex items-center justify-center rounded-full bg-slate-800/10 dark:bg-slate-200/10 hover:bg-slate-800/20 dark:hover:bg-slate-200/20 transition">
+                        <svg id="icon-sun" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="hidden"><circle cx="12" cy="12" r="5"/><line x1="12" x2="12" y1="1" y2="3"/><line x1="12" x2="12" y1="21" y2="23"/><line x1="4.22" x2="5.64" y1="4.22" y2="5.64"/><line x1="18.36" x2="19.78" y1="18.36" y2="19.78"/><line x1="1" x2="3" y1="12" y2="12"/><line x1="21" x2="23" y1="12" y2="12"/><line x1="4.22" x2="5.64" y1="19.78" y2="18.36"/><line x1="18.36" x2="19.78" y1="5.64" y2="4.22"/></svg>
+                        <svg id="icon-moon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="hidden"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- MAIN CONTENT -->
+        <main class="max-w-7xl mx-auto p-4 md:p-8">
+
+            <!-- DATE & EVALUATOR INFO (Shown after selection) -->
+            <div id="selected-info" class="hidden card p-4 mb-6 fade-in">
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <div class="flex items-center gap-4">
+                        <div>
+                            <p class="text-sm text-text-muted">Tarih</p>
+                            <p id="display-date" class="font-bold text-lg"></p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-text-muted">Değerlendiren</p>
+                            <p id="display-evaluator" class="font-bold text-lg"></p>
+                        </div>
+                    </div>
+                    <button id="btn-change-date" class="bg-slate-500/20 hover:bg-slate-500/30 px-4 py-2 rounded-lg font-medium transition">
+                        Tarih/İsim Değiştir
+                    </button>
+                </div>
+            </div>
+
+            <!-- CHILDREN LIST -->
+            <div id="children-container" class="hidden">
+                <!-- Add Child Button (Admin Only) -->
+                <div id="add-child-section" class="hidden mb-6">
+                    <button id="btn-add-child" class="w-full md:w-auto bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition flex items-center justify-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        Yeni Çocuk Ekle
+                    </button>
+                </div>
+
+                <!-- Search & Sort -->
+                <div class="flex flex-col md:flex-row gap-4 mb-6">
+                    <input type="search" id="search-input" placeholder="Çocuk ara..." class="flex-1 px-4 py-3 bg-[var(--input-bg)] border border-[var(--input-border)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] transition">
+                    <select id="sort-select" class="px-4 py-3 bg-[var(--input-bg)] border border-[var(--input-border)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] transition">
+                        <option value="az">Alfabetik (A-Z)</option>
+                        <option value="za">Alfabetik (Z-A)</option>
+                        <option value="avg-desc">Ortalama (Yüksek → Düşük)</option>
+                        <option value="avg-asc">Ortalama (Düşük → Yüksek)</option>
+                    </select>
+                </div>
+
+                <!-- Children List -->
+                <div id="children-list" class="space-y-6"></div>
+
+                <!-- Save Button -->
+                <button id="btn-save-all" class="hidden w-full mt-8 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-4 px-6 rounded-lg shadow-lg transition flex items-center justify-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m9 12 2 2 4-4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                    <span id="save-button-text">Tüm Değişiklikleri Kaydet</span>
+                </button>
+            </div>
+
+            <!-- GAINS & LEADERBOARD (Right Sidebar) -->
+            <div id="sidebar" class="hidden mt-8 space-y-6">
+                <!-- Gains List (For Staff) -->
+                <div id="gains-section" class="card p-6">
+                    <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 14v6"/><path d="M10 14a2 2 0 1 0 4 0"/><path d="m17.3 5.3-2.6 5.2a2 2 0 0 0 1.3 2.5 2 2 0 0 0 2.5-1.3l2.6-5.2a2 2 0 0 0-3.8-1.2z"/><path d="m6.7 5.3 2.6 5.2a2 2 0 0 1-1.3 2.5 2 2 0 0 1-2.5-1.3L2.9 6.5a2 2 0 0 1 3.8-1.2z"/></svg>
+                        Kazanım Durumu
+                    </h2>
+                    <div id="gains-list"></div>
+                </div>
+
+                <!-- Leaderboard (Admin Only) -->
+                <div id="leaderboard-section" class="hidden card p-6">
+                    <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                        Liderlik Tablosu
+                    </h2>
+                    <div id="leaderboard-list"></div>
+                </div>
+
+                <!-- Chart (Admin Only) -->
+                <div id="chart-section" class="hidden card p-6">
+                    <h2 class="text-xl font-bold mb-4">Gelişim Grafiği</h2>
+                    <canvas id="development-chart"></canvas>
+                </div>
+
+                <!-- History (Admin Only) -->
+                <div id="history-section" class="hidden card p-6">
+                    <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="4" rx="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+                        Kayıt Geçmişi
+                    </h2>
+                    <div id="history-list" class="space-y-2 max-h-[600px] overflow-y-auto"></div>
+                </div>
+            </div>
+
+        </main>
+
+    </div>
+
+    <!-- MODALS -->
+
+    <!-- Date Selection Modal -->
+    <div id="modal-date" class="fixed inset-0 hidden items-center justify-center z-[100] modal-overlay p-4" onclick="if(event.target.id==='modal-date') closeModal('date')">
+        <div class="bg-[var(--card-bg)] p-8 rounded-2xl shadow-2xl w-full max-w-md transform transition-all duration-300 scale-95 opacity-0" id="modal-date-container">
+            <h3 class="text-2xl font-bold text-center mb-6">Hangi Tarihi Değerlendireceksiniz?</h3>
+            <input type="date" id="input-date" class="w-full px-4 py-3 bg-[var(--input-bg)] border border-[var(--input-border)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] mb-6">
+            <div id="date-warning" class="hidden bg-yellow-500/10 border border-yellow-500/50 text-yellow-600 dark:text-yellow-400 p-3 rounded-lg mb-4 text-sm"></div>
+            <button id="btn-date-next" class="w-full bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white font-bold py-3 rounded-lg transition">
+                İleri
+            </button>
+        </div>
+    </div>
+
+    <!-- Evaluator Name Modal -->
+    <div id="modal-evaluator" class="fixed inset-0 hidden items-center justify-center z-[100] modal-overlay p-4" onclick="if(event.target.id==='modal-evaluator') closeModal('evaluator')">
+        <div class="bg-[var(--card-bg)] p-8 rounded-2xl shadow-2xl w-full max-w-md transform transition-all duration-300 scale-95 opacity-0" id="modal-evaluator-container">
+            <h3 class="text-2xl font-bold text-center mb-6">Değerlendirmeyi Kim Yapıyor?</h3>
+            <input type="text" id="input-evaluator" placeholder="Adınız Soyadınız" class="w-full px-4 py-3 bg-[var(--input-bg)] border border-[var(--input-border)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] mb-6">
+            <div class="flex gap-4">
+                <button id="btn-evaluator-back" class="flex-1 bg-slate-500/20 hover:bg-slate-500/30 font-bold py-3 rounded-lg transition">
+                    Geri
+                </button>
+                <button id="btn-evaluator-next" class="flex-1 bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white font-bold py-3 rounded-lg transition">
+                    Devam Et
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Child Modal -->
+    <div id="modal-add-child" class="fixed inset-0 hidden items-center justify-center z-[100] modal-overlay p-4" onclick="if(event.target.id==='modal-add-child') closeModal('add-child')">
+        <div class="bg-[var(--card-bg)] p-8 rounded-2xl shadow-2xl w-full max-w-md transform transition-all duration-300 scale-95 opacity-0" id="modal-add-child-container">
+            <h3 class="text-2xl font-bold text-center mb-6">Yeni Çocuk Ekle</h3>
+            <input type="text" id="input-child-name" placeholder="Çocuğun Adı Soyadı" class="w-full px-4 py-3 bg-[var(--input-bg)] border border-[var(--input-border)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] mb-6">
+            <div class="flex gap-4">
+                <button onclick="closeModal('add-child')" class="flex-1 bg-slate-500/20 hover:bg-slate-500/30 font-bold py-3 rounded-lg transition">
+                    İptal
+                </button>
+                <button id="btn-save-child" class="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 rounded-lg transition">
+                    Kaydet
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="modal-delete" class="fixed inset-0 hidden items-center justify-center z-[100] modal-overlay p-4" onclick="if(event.target.id==='modal-delete') closeModal('delete')">
+        <div class="bg-[var(--card-bg)] p-8 rounded-2xl shadow-2xl w-full max-w-md transform transition-all duration-300 scale-95 opacity-0" id="modal-delete-container">
+            <h3 class="text-2xl font-bold text-center mb-4">Çocuğu Arşivle</h3>
+            <p id="delete-text" class="text-center text-text-muted mb-6"></p>
+            <div class="flex gap-4">
+                <button onclick="closeModal('delete')" class="flex-1 bg-slate-500/20 hover:bg-slate-500/30 font-bold py-3 rounded-lg transition">
+                    İptal
+                </button>
+                <button id="btn-confirm-delete" class="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 rounded-lg transition">
+                    Arşivle
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal (Admin) -->
+    <div id="modal-settings" class="fixed inset-0 hidden items-center justify-center z-[100] modal-overlay p-4 overflow-y-auto" onclick="if(event.target.id==='modal-settings') closeModal('settings')">
+        <div class="bg-[var(--card-bg)] p-8 rounded-2xl shadow-2xl w-full max-w-2xl my-8 transform transition-all duration-300 scale-95 opacity-0" id="modal-settings-container">
+            <h3 class="text-2xl font-bold text-center mb-8">Ayarlar</h3>
+
+            <div class="space-y-6 max-h-[70vh] overflow-y-auto pr-2">
+                <!-- Categories -->
+                <div>
+                    <h4 class="font-bold text-lg mb-3">Kategoriler</h4>
+                    <div id="categories-list" class="space-y-2"></div>
+                    <button id="btn-add-category" class="mt-3 w-full bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 font-bold py-2 rounded-lg transition">
+                        + Kategori Ekle
+                    </button>
+                </div>
+
+                <!-- Gain Rules -->
+                <div>
+                    <h4 class="font-bold text-lg mb-3">Kazanım Kuralları</h4>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Kazanım Eşiği</label>
+                            <input type="number" id="input-threshold" step="0.01" min="0" max="5" class="w-full px-3 py-2 bg-[var(--input-bg)] border border-[var(--input-border)] rounded-lg">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Hesaplama Tipi</label>
+                            <select id="select-calc-type" class="w-full px-3 py-2 bg-[var(--input-bg)] border border-[var(--input-border)] rounded-lg">
+                                <option value="neutral">Nötr Ortalama</option>
+                                <option value="normal">Normal Ortalama</option>
+                            </select>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-1">Kaç adet 5</label>
+                                <input type="number" id="input-veto-fives" min="1" value="2" class="w-full px-3 py-2 bg-[var(--input-bg)] border border-[var(--input-border)] rounded-lg">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1">Kaç adet 1'i siler</label>
+                                <input type="number" id="input-veto-ones" min="1" value="1" class="w-full px-3 py-2 bg-[var(--input-bg)] border border-[var(--input-border)] rounded-lg">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Nötrleme sonrası kaç '1' kalırsa kazanım iptal?</label>
+                            <input type="number" id="input-cancel-threshold" min="0" value="1" class="w-full px-3 py-2 bg-[var(--input-bg)] border border-[var(--input-border)] rounded-lg">
+                            <p class="text-xs text-text-muted mt-1">0 = İptal kuralı yok, 1+ = O kadar veya daha fazla '1' kalırsa iptal</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Periods -->
+                <div>
+                    <h4 class="font-bold text-lg mb-3">Periyotlar</h4>
+                    <div id="periods-list" class="space-y-3"></div>
+                    <button id="btn-add-period" class="mt-3 w-full bg-purple-500/10 hover:bg-purple-500/20 text-purple-600 dark:text-purple-400 font-bold py-2 rounded-lg transition">
+                        + Periyot Ekle
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex gap-4 mt-8">
+                <button onclick="closeModal('settings')" class="flex-1 bg-slate-500/20 hover:bg-slate-500/30 font-bold py-3 rounded-lg transition">
+                    İptal
+                </button>
+                <button id="btn-save-settings" class="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 rounded-lg transition">
+                    Kaydet
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Description Modal -->
+    <div id="modal-description" class="fixed inset-0 hidden items-center justify-center z-[110] modal-overlay p-4" onclick="if(event.target.id==='modal-description') closeModal('description')">
+        <div class="bg-[var(--card-bg)] p-8 rounded-2xl shadow-2xl w-full max-w-lg transform transition-all duration-300 scale-95 opacity-0" id="modal-description-container">
+            <h3 id="description-title" class="text-xl font-bold text-center mb-6">Açıklama Ekle</h3>
+            <textarea id="input-description" rows="5" placeholder="Not ekleyin (opsiyonel)..." class="w-full p-3 bg-[var(--input-bg)] border border-[var(--input-border)] rounded-lg focus:ring-2 focus:ring-[var(--accent)] mb-6"></textarea>
+            <div class="flex gap-4">
+                <button onclick="closeModal('description')" class="flex-1 bg-slate-500/20 hover:bg-slate-500/30 font-bold py-3 rounded-lg transition">
+                    İptal
+                </button>
+                <button id="btn-save-description" class="flex-1 bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white font-bold py-3 rounded-lg transition">
+                    Kaydet
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">
+        <div id="toast-content" class="px-6 py-4 rounded-xl shadow-2xl text-white font-medium flex items-center gap-3"></div>
+    </div>
+
+    <!-- Firebase & App Script -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signInAnonymously, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        // Firebase Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyB3ghCRUQ5Jk4n6VSnlSp1AYTqubCFvX5g",
+            authDomain: "yoklamalistesi-da9eb.firebaseapp.com",
+            projectId: "yoklamalistesi-da9eb",
+            storageBucket: "yoklamalistesi-da9eb.appspot.com",
+            messagingSenderId: "926689591561",
+            appId: "1:926689591561:web:9754db1ce0645ceaa753d8",
+            measurementId: "G-5YDR46VPJX"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        // Global State
+        const state = {
+            currentUser: null,
+            isAdmin: false,
+            selectedDate: null,
+            selectedEvaluator: null,
+            children: [],
+            settings: {
+                categories: ['Kişisel Görevler', 'Ortak Alan', 'Eğitim', 'Genel Tutum'],
+                threshold: 3.25,
+                calcType: 'neutral',
+                vetoFives: 2,
+                vetoOnes: 1,
+                cancelThreshold: 1,
+                periods: [
+                    { days: 6, name: '6 Günlük Kazanım' },
+                    { days: 12, name: '12 Günlük Kazanım' }
+                ]
+            },
+            unsavedChanges: {},
+            currentDescriptionContext: null,
+            deleteChildId: null
+        };
+
+        // DOM Elements
+        const dom = {
+            loadingScreen: document.getElementById('loading-screen'),
+            app: document.getElementById('app'),
+            authStatus: document.getElementById('auth-status'),
+            authControls: document.getElementById('auth-controls'),
+            themeToggle: document.getElementById('theme-toggle'),
+            iconSun: document.getElementById('icon-sun'),
+            iconMoon: document.getElementById('icon-moon'),
+            selectedInfo: document.getElementById('selected-info'),
+            displayDate: document.getElementById('display-date'),
+            displayEvaluator: document.getElementById('display-evaluator'),
+            btnChangeDate: document.getElementById('btn-change-date'),
+            childrenContainer: document.getElementById('children-container'),
+            addChildSection: document.getElementById('add-child-section'),
+            btnAddChild: document.getElementById('btn-add-child'),
+            searchInput: document.getElementById('search-input'),
+            sortSelect: document.getElementById('sort-select'),
+            childrenList: document.getElementById('children-list'),
+            btnSaveAll: document.getElementById('btn-save-all'),
+            saveButtonText: document.getElementById('save-button-text'),
+            sidebar: document.getElementById('sidebar'),
+            gainsSection: document.getElementById('gains-section'),
+            gainsList: document.getElementById('gains-list'),
+            leaderboardSection: document.getElementById('leaderboard-section'),
+            leaderboardList: document.getElementById('leaderboard-list'),
+            chartSection: document.getElementById('chart-section'),
+            historySection: document.getElementById('history-section'),
+            historyList: document.getElementById('history-list'),
+            modalDate: document.getElementById('modal-date'),
+            modalDateContainer: document.getElementById('modal-date-container'),
+            inputDate: document.getElementById('input-date'),
+            dateWarning: document.getElementById('date-warning'),
+            btnDateNext: document.getElementById('btn-date-next'),
+            modalEvaluator: document.getElementById('modal-evaluator'),
+            modalEvaluatorContainer: document.getElementById('modal-evaluator-container'),
+            inputEvaluator: document.getElementById('input-evaluator'),
+            btnEvaluatorBack: document.getElementById('btn-evaluator-back'),
+            btnEvaluatorNext: document.getElementById('btn-evaluator-next'),
+            modalAddChild: document.getElementById('modal-add-child'),
+            modalAddChildContainer: document.getElementById('modal-add-child-container'),
+            inputChildName: document.getElementById('input-child-name'),
+            btnSaveChild: document.getElementById('btn-save-child'),
+            modalDelete: document.getElementById('modal-delete'),
+            modalDeleteContainer: document.getElementById('modal-delete-container'),
+            deleteText: document.getElementById('delete-text'),
+            btnConfirmDelete: document.getElementById('btn-confirm-delete'),
+            modalSettings: document.getElementById('modal-settings'),
+            modalSettingsContainer: document.getElementById('modal-settings-container'),
+            categoriesList: document.getElementById('categories-list'),
+            btnAddCategory: document.getElementById('btn-add-category'),
+            inputThreshold: document.getElementById('input-threshold'),
+            selectCalcType: document.getElementById('select-calc-type'),
+            inputVetoFives: document.getElementById('input-veto-fives'),
+            inputVetoOnes: document.getElementById('input-veto-ones'),
+            inputCancelThreshold: document.getElementById('input-cancel-threshold'),
+            periodsList: document.getElementById('periods-list'),
+            btnAddPeriod: document.getElementById('btn-add-period'),
+            btnSaveSettings: document.getElementById('btn-save-settings'),
+            modalDescription: document.getElementById('modal-description'),
+            modalDescriptionContainer: document.getElementById('modal-description-container'),
+            descriptionTitle: document.getElementById('description-title'),
+            inputDescription: document.getElementById('input-description'),
+            btnSaveDescription: document.getElementById('btn-save-description'),
+            toast: document.getElementById('toast'),
+            toastContent: document.getElementById('toast-content')
+        };
+
+        // Utility Functions
+        function showToast(message, type = 'success') {
+            const icons = {
+                success: '<svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>',
+                error: '<svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>',
+                warning: '<svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>',
+                info: '<svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg>'
+            };
+            const colors = {
+                success: 'bg-emerald-500',
+                error: 'bg-red-500',
+                warning: 'bg-yellow-500',
+                info: 'bg-blue-500'
+            };
+
+            dom.toastContent.innerHTML = icons[type] + `<span>${message}</span>`;
+            dom.toastContent.className = `${colors[type]} px-6 py-4 rounded-xl shadow-2xl text-white font-medium flex items-center gap-3`;
+            dom.toast.classList.add('show');
+            setTimeout(() => dom.toast.classList.remove('show'), 4000);
+        }
+
+        function openModal(modalName) {
+            const modals = {
+                date: dom.modalDate,
+                evaluator: dom.modalEvaluator,
+                'add-child': dom.modalAddChild,
+                delete: dom.modalDelete,
+                settings: dom.modalSettings,
+                description: dom.modalDescription
+            };
+            const containers = {
+                date: dom.modalDateContainer,
+                evaluator: dom.modalEvaluatorContainer,
+                'add-child': dom.modalAddChildContainer,
+                delete: dom.modalDeleteContainer,
+                settings: dom.modalSettingsContainer,
+                description: dom.modalDescriptionContainer
+            };
+
+            const modal = modals[modalName];
+            const container = containers[modalName];
+            if (modal && container) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                setTimeout(() => {
+                    container.classList.remove('scale-95', 'opacity-0');
+                }, 10);
+            }
+        }
+
+        window.closeModal = function(modalName) {
+            const modals = {
+                date: { modal: dom.modalDate, container: dom.modalDateContainer },
+                evaluator: { modal: dom.modalEvaluator, container: dom.modalEvaluatorContainer },
+                'add-child': { modal: dom.modalAddChild, container: dom.modalAddChildContainer },
+                delete: { modal: dom.modalDelete, container: dom.modalDeleteContainer },
+                settings: { modal: dom.modalSettings, container: dom.modalSettingsContainer },
+                description: { modal: dom.modalDescription, container: dom.modalDescriptionContainer }
+            };
+
+            const { modal, container } = modals[modalName] || {};
+            if (modal && container) {
+                container.classList.add('scale-95', 'opacity-0');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                }, 300);
+            }
+        };
+
+        // Theme Management
+        function applyTheme(theme) {
+            if (theme === 'dark') {
+                document.documentElement.classList.add('dark');
+                dom.iconSun.classList.remove('hidden');
+                dom.iconMoon.classList.add('hidden');
+            } else {
+                document.documentElement.classList.remove('dark');
+                dom.iconSun.classList.add('hidden');
+                dom.iconMoon.classList.remove('hidden');
+            }
+        }
+
+        dom.themeToggle.addEventListener('click', () => {
+            const isDark = document.documentElement.classList.contains('dark');
+            const newTheme = isDark ? 'light' : 'dark';
+            localStorage.setItem('theme', newTheme);
+            applyTheme(newTheme);
+        });
+
+        // Initialize
+        async function init() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            applyTheme(savedTheme);
+
+            // Set today's date
+            const today = new Date().toISOString().split('T')[0];
+            dom.inputDate.value = today;
+            dom.inputDate.max = today;
+
+            // Auth state listener
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    state.currentUser = user;
+                    state.isAdmin = !user.isAnonymous;
+                    dom.authStatus.textContent = state.isAdmin ? `Yönetici: ${user.email}` : 'Personel Girişi';
+
+                    await loadSettings();
+                    await loadChildren();
+                    updateAuthUI();
+                    showMainApp();
+                } else {
+                    // Sign in anonymously
+                    await signInAnonymously(auth);
+                }
+            });
+        }
+
+        function updateAuthUI() {
+            if (state.isAdmin) {
+                dom.authControls.innerHTML = `
+                    <div class="relative">
+                        <button id="btn-admin-menu" class="w-10 h-10 flex items-center justify-center rounded-full bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 transition">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        </button>
+                        <div id="admin-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-lg shadow-xl py-1 z-50">
+                            <button onclick="openModal('settings')" class="w-full text-left px-4 py-2 hover:bg-[var(--input-bg)] transition">⚙️ Ayarlar</button>
+                            <button id="btn-logout" class="w-full text-left px-4 py-2 hover:bg-[var(--input-bg)] text-red-500 transition">🚪 Çıkış Yap</button>
+                        </div>
+                    </div>
+                `;
+
+                document.getElementById('btn-admin-menu').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    document.getElementById('admin-dropdown').classList.toggle('hidden');
+                });
+
+                document.addEventListener('click', () => {
+                    const dropdown = document.getElementById('admin-dropdown');
+                    if (dropdown && !dropdown.classList.contains('hidden')) {
+                        dropdown.classList.add('hidden');
+                    }
+                });
+
+                document.getElementById('btn-logout').addEventListener('click', async () => {
+                    await signOut(auth);
+                    showToast('Çıkış yapıldı.', 'info');
+                    location.reload();
+                });
+
+                dom.addChildSection.classList.remove('hidden');
+                dom.leaderboardSection.classList.remove('hidden');
+                dom.chartSection.classList.remove('hidden');
+                dom.historySection.classList.remove('hidden');
+            } else {
+                dom.authControls.innerHTML = `
+                    <button id="btn-admin-login" class="bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white font-bold py-2 px-4 rounded-lg transition text-sm flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" x2="3" y1="12" y2="12"/></svg>
+                        Yönetici Girişi
+                    </button>
+                `;
+
+                document.getElementById('btn-admin-login').addEventListener('click', showAdminLoginModal);
+            }
+        }
+
+        function showAdminLoginModal() {
+            const modal = document.createElement('div');
+            modal.id = 'modal-admin-login';
+            modal.className = 'fixed inset-0 flex items-center justify-center z-[100] modal-overlay p-4';
+            modal.innerHTML = `
+                <div class="bg-[var(--card-bg)] p-8 rounded-2xl shadow-2xl w-full max-w-md">
+                    <h3 class="text-2xl font-bold text-center mb-6">Yönetici Girişi</h3>
+                    <input type="email" id="admin-email" placeholder="E-posta" class="w-full px-4 py-3 bg-[var(--input-bg)] border border-[var(--input-border)] rounded-lg mb-4">
+                    <input type="password" id="admin-password" placeholder="Şifre" class="w-full px-4 py-3 bg-[var(--input-bg)] border border-[var(--input-border)] rounded-lg mb-6">
+                    <div id="login-error" class="hidden text-red-500 text-sm mb-4 text-center"></div>
+                    <button id="btn-login-submit" class="w-full bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white font-bold py-3 rounded-lg transition">
+                        Giriş Yap
+                    </button>
+                </div>
+            `;
+            document.body.appendChild(modal);
+
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            });
+
+            document.getElementById('btn-login-submit').addEventListener('click', async () => {
+                const email = document.getElementById('admin-email').value;
+                const password = document.getElementById('admin-password').value;
+                const errorDiv = document.getElementById('login-error');
+
+                try {
+                    await signInWithEmailAndPassword(auth, email, password);
+                    showToast('Yönetici girişi başarılı!', 'success');
+                    modal.remove();
+                    location.reload();
+                } catch (error) {
+                    errorDiv.textContent = 'E-posta veya şifre hatalı.';
+                    errorDiv.classList.remove('hidden');
+                }
+            });
+        }
+
+        function showMainApp() {
+            dom.loadingScreen.classList.add('hidden');
+            dom.app.classList.remove('hidden');
+            setTimeout(() => dom.app.classList.remove('opacity-0'), 100);
+
+            // Show date modal automatically
+            openModal('date');
+        }
+
+        // Firebase Data Functions
+        async function loadSettings() {
+            try {
+                const docRef = doc(db, 'settings', 'app_config');
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    state.settings = { ...state.settings, ...data };
+                } else {
+                    await setDoc(docRef, state.settings);
+                }
+            } catch (error) {
+                console.error('Settings load error:', error);
+                showToast('Ayarlar yüklenemedi.', 'error');
+            }
+        }
+
+        async function loadChildren() {
+            try {
+                const docRef = doc(db, 'score_tracker_data', 'main_data_document');
+                onSnapshot(docRef, (docSnap) => {
+                    if (docSnap.exists()) {
+                        const data = docSnap.data();
+                        state.children = data.children || [];
+                        renderChildren();
+                        renderGains();
+                        if (state.isAdmin) {
+                            renderLeaderboard();
+                            renderHistory();
+                        }
+                    } else {
+                        state.children = [];
+                        setDoc(docRef, { children: [] });
+                    }
+                });
+            } catch (error) {
+                console.error('Children load error:', error);
+                showToast('Çocuklar yüklenemedi.', 'error');
+            }
+        }
+
+        async function saveChildren() {
+            try {
+                const docRef = doc(db, 'score_tracker_data', 'main_data_document');
+                await setDoc(docRef, { children: state.children }, { merge: true });
+                return true;
+            } catch (error) {
+                console.error('Save error:', error);
+                showToast('Kayıt başarısız!', 'error');
+                return false;
+            }
+        }
+
+        async function saveSettings() {
+            try {
+                const docRef = doc(db, 'settings', 'app_config');
+                await setDoc(docRef, state.settings, { merge: true });
+                showToast('Ayarlar kaydedildi!', 'success');
+                return true;
+            } catch (error) {
+                console.error('Settings save error:', error);
+                showToast('Ayarlar kaydedilemedi!', 'error');
+                return false;
+            }
+        }
+
+        // Modal Handlers
+        dom.btnDateNext.addEventListener('click', () => {
+            const selectedDate = dom.inputDate.value;
+            if (!selectedDate) {
+                showToast('Lütfen bir tarih seçin.', 'warning');
+                return;
+            }
+
+            state.selectedDate = selectedDate;
+
+            // Check if there's existing data for this date
+            const hasExistingData = state.children.some(child =>
+                child.scores && child.scores.some(s => s.date === selectedDate)
+            );
+
+            if (hasExistingData) {
+                const existingEvaluator = state.children.find(child =>
+                    child.scores && child.scores.find(s => s.date === selectedDate)
+                )?.scores.find(s => s.date === selectedDate)?.evaluator;
+
+                dom.dateWarning.textContent = `Bu tarihte kayıt mevcut. Düzenlemek istediğinize emin misiniz?`;
+                dom.dateWarning.classList.remove('hidden');
+                dom.inputEvaluator.value = existingEvaluator || '';
+            } else {
+                dom.dateWarning.classList.add('hidden');
+                dom.inputEvaluator.value = localStorage.getItem('evaluatorName') || '';
+            }
+
+            window.closeModal('date');
+            openModal('evaluator');
+        });
+
+        dom.btnEvaluatorBack.addEventListener('click', () => {
+            window.closeModal('evaluator');
+            openModal('date');
+        });
+
+        dom.btnEvaluatorNext.addEventListener('click', () => {
+            const evaluator = dom.inputEvaluator.value.trim();
+            if (!evaluator) {
+                showToast('Lütfen adınızı girin.', 'warning');
+                dom.inputEvaluator.classList.add('error-highlight');
+                setTimeout(() => dom.inputEvaluator.classList.remove('error-highlight'), 500);
+                return;
+            }
+
+            state.selectedEvaluator = evaluator;
+            localStorage.setItem('evaluatorName', evaluator);
+
+            // Show selected info
+            dom.displayDate.textContent = formatDate(state.selectedDate);
+            dom.displayEvaluator.textContent = state.selectedEvaluator;
+            dom.selectedInfo.classList.remove('hidden');
+            dom.childrenContainer.classList.remove('hidden');
+            dom.sidebar.classList.remove('hidden');
+
+            // Load existing scores for this date
+            loadScoresForDate(state.selectedDate);
+
+            window.closeModal('evaluator');
+        });
+
+        dom.btnChangeDate.addEventListener('click', () => {
+            if (Object.keys(state.unsavedChanges).length > 0) {
+                if (!confirm('Kaydedilmemiş değişiklikler var! Devam etmek istiyor musunuz?')) {
+                    return;
+                }
+            }
+            state.unsavedChanges = {};
+            openModal('date');
+        });
+
+        // Add Child
+        dom.btnAddChild.addEventListener('click', () => {
+            if (!state.isAdmin) {
+                showToast('Bu işlem için yönetici olmalısınız.', 'warning');
+                return;
+            }
+            dom.inputChildName.value = '';
+            openModal('add-child');
+        });
+
+        dom.btnSaveChild.addEventListener('click', async () => {
+            const name = dom.inputChildName.value.trim();
+            if (!name) {
+                showToast('Lütfen bir isim girin.', 'warning');
+                return;
+            }
+
+            const newChild = {
+                id: crypto.randomUUID(),
+                name: name,
+                scores: []
+            };
+
+            state.children.push(newChild);
+            const success = await saveChildren();
+            if (success) {
+                showToast(`${name} eklendi!`, 'success');
+                window.closeModal('add-child');
+                renderChildren();
+            }
+        });
+
+        // Delete/Archive Child
+        window.showDeleteModal = function(childId, childName) {
+            if (!state.isAdmin) {
+                showToast('Bu işlem için yönetici olmalısınız.', 'warning');
+                return;
+            }
+            state.deleteChildId = childId;
+            dom.deleteText.innerHTML = `<strong>${childName}</strong> adlı çocuğu arşivlemek istediğinizden emin misiniz?`;
+            openModal('delete');
+        };
+
+        dom.btnConfirmDelete.addEventListener('click', async () => {
+            if (!state.deleteChildId) return;
+
+            // For now, just delete (archiving can be implemented later)
+            state.children = state.children.filter(c => c.id !== state.deleteChildId);
+            const success = await saveChildren();
+            if (success) {
+                showToast('Çocuk silindi.', 'info');
+                window.closeModal('delete');
+                state.deleteChildId = null;
+                renderChildren();
+            }
+        });
+
+        // Settings Modal
+        dom.btnSaveSettings.addEventListener('click', async () => {
+            // Get categories
+            const categoryInputs = dom.categoriesList.querySelectorAll('input[data-category-index]');
+            state.settings.categories = Array.from(categoryInputs).map(input => input.value.trim()).filter(Boolean);
+
+            // Get rules
+            state.settings.threshold = parseFloat(dom.inputThreshold.value);
+            state.settings.calcType = dom.selectCalcType.value;
+            state.settings.vetoFives = parseInt(dom.inputVetoFives.value);
+            state.settings.vetoOnes = parseInt(dom.inputVetoOnes.value);
+            state.settings.cancelThreshold = parseInt(dom.inputCancelThreshold.value);
+
+            // Get periods
+            const periodInputs = dom.periodsList.querySelectorAll('.period-item');
+            state.settings.periods = Array.from(periodInputs).map(item => ({
+                days: parseInt(item.querySelector('.period-days').value),
+                name: item.querySelector('.period-name').value.trim()
+            })).filter(p => p.days > 0 && p.name);
+
+            const success = await saveSettings();
+            if (success) {
+                window.closeModal('settings');
+                renderChildren();
+                renderGains();
+                if (state.isAdmin) {
+                    renderLeaderboard();
+                }
+            }
+        });
+
+        function renderSettingsModal() {
+            // Categories
+            dom.categoriesList.innerHTML = state.settings.categories.map((cat, i) => `
+                <div class="flex gap-2">
+                    <input type="text" value="${cat}" data-category-index="${i}" class="flex-1 px-3 py-2 bg-[var(--input-bg)] border border-[var(--input-border)] rounded-lg">
+                    <button onclick="removeCategory(${i})" class="px-3 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-600 rounded-lg transition">✕</button>
+                </div>
+            `).join('');
+
+            // Rules
+            dom.inputThreshold.value = state.settings.threshold;
+            dom.selectCalcType.value = state.settings.calcType;
+            dom.inputVetoFives.value = state.settings.vetoFives;
+            dom.inputVetoOnes.value = state.settings.vetoOnes;
+            dom.inputCancelThreshold.value = state.settings.cancelThreshold;
+
+            // Periods
+            dom.periodsList.innerHTML = state.settings.periods.map((period, i) => `
+                <div class="period-item flex gap-2">
+                    <input type="number" min="1" value="${period.days}" class="period-days w-24 px-3 py-2 bg-[var(--input-bg)] border border-[var(--input-border)] rounded-lg" placeholder="Gün">
+                    <input type="text" value="${period.name}" class="period-name flex-1 px-3 py-2 bg-[var(--input-bg)] border border-[var(--input-border)] rounded-lg" placeholder="Periyot Adı">
+                    <button onclick="removePeriod(${i})" class="px-3 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-600 rounded-lg transition">✕</button>
+                </div>
+            `).join('');
+        }
+
+        dom.btnAddCategory.addEventListener('click', () => {
+            state.settings.categories.push('Yeni Kategori');
+            renderSettingsModal();
+        });
+
+        window.removeCategory = function(index) {
+            state.settings.categories.splice(index, 1);
+            renderSettingsModal();
+        };
+
+        dom.btnAddPeriod.addEventListener('click', () => {
+            state.settings.periods.push({ days: 7, name: 'Yeni Periyot' });
+            renderSettingsModal();
+        });
+
+        window.removePeriod = function(index) {
+            state.settings.periods.splice(index, 1);
+            renderSettingsModal();
+        };
+
+        // When settings modal is opened
+        const originalOpenModal = openModal;
+        openModal = function(modalName) {
+            if (modalName === 'settings') {
+                renderSettingsModal();
+            }
+            originalOpenModal(modalName);
+        };
+
+        // Description Modal
+        window.showDescriptionModal = function(childId, categoryIndex) {
+            const child = state.children.find(c => c.id === childId);
+            if (!child) return;
+
+            const categoryName = state.settings.categories[categoryIndex] || 'Kategori';
+            dom.descriptionTitle.textContent = `${child.name} - ${categoryName}`;
+
+            const existingDesc = state.unsavedChanges[childId]?.descriptions?.[categoryIndex] || '';
+            dom.inputDescription.value = existingDesc;
+
+            state.currentDescriptionContext = { childId, categoryIndex };
+            originalOpenModal('description');
+        };
+
+        dom.btnSaveDescription.addEventListener('click', () => {
+            if (!state.currentDescriptionContext) return;
+
+            const { childId, categoryIndex } = state.currentDescriptionContext;
+            const description = dom.inputDescription.value.trim();
+
+            if (!state.unsavedChanges[childId]) {
+                state.unsavedChanges[childId] = { descriptions: {} };
+            }
+            if (!state.unsavedChanges[childId].descriptions) {
+                state.unsavedChanges[childId].descriptions = {};
+            }
+
+            if (description) {
+                state.unsavedChanges[childId].descriptions[categoryIndex] = description;
+            } else {
+                delete state.unsavedChanges[childId].descriptions[categoryIndex];
+            }
+
+            window.closeModal('description');
+            renderChildren();
+        });
+
+        // Calculation Functions
+        function calculateNeutralAverage(scores) {
+            if (!scores || scores.length === 0) return null;
+
+            const allScores = [...scores];
+            let fives = allScores.filter(s => s === 5).length;
+            let ones = allScores.filter(s => s === 1).length;
+
+            // Apply veto rule
+            const { vetoFives, vetoOnes } = state.settings;
+            while (fives >= vetoFives && ones >= vetoOnes) {
+                fives -= vetoFives;
+                ones -= vetoOnes;
+            }
+
+            // Remove cancelled scores
+            let remainingScores = [...allScores];
+            const fivesToRemove = allScores.filter(s => s === 5).length - fives;
+            const onesToRemove = allScores.filter(s => s === 1).length - ones;
+
+            for (let i = 0; i < fivesToRemove; i++) {
+                const idx = remainingScores.indexOf(5);
+                if (idx !== -1) remainingScores.splice(idx, 1);
+            }
+            for (let i = 0; i < onesToRemove; i++) {
+                const idx = remainingScores.indexOf(1);
+                if (idx !== -1) remainingScores.splice(idx, 1);
+            }
+
+            // Check if any ones remain
+            const remainingOnes = remainingScores.filter(s => s === 1).length;
+
+            if (remainingScores.length === 0) return null;
+
+            const avg = remainingScores.reduce((a, b) => a + b, 0) / remainingScores.length;
+
+            return {
+                average: avg,
+                remainingOnes: remainingOnes,
+                totalScores: remainingScores.length
+            };
+        }
+
+        function calculateNormalAverage(scores) {
+            if (!scores || scores.length === 0) return null;
+            return scores.reduce((a, b) => a + b, 0) / scores.length;
+        }
+
+        function getAverageColor(avg) {
+            if (avg === null || avg === '-') return 'text-text-muted';
+            if (avg >= 4.5) return 'text-emerald-500';
+            if (avg >= 3.75) return 'text-lime-500';
+            if (avg >= 3.25) return 'text-yellow-500';
+            if (avg >= 2.5) return 'text-orange-500';
+            return 'text-red-500';
+        }
+
+        function calculateChildStats(child) {
+            if (!child.scores || child.scores.length === 0) {
+                return {
+                    normalAvg: null,
+                    neutralAvg: null,
+                    periods: state.settings.periods.map(() => null)
+                };
+            }
+
+            // Get all scores as flat array
+            const allScoreValues = child.scores.flatMap(scoreEntry => {
+                const values = [];
+                for (let i = 1; i <= state.settings.categories.length; i++) {
+                    if (scoreEntry[`s${i}`] !== undefined) {
+                        values.push(scoreEntry[`s${i}`]);
+                    }
+                }
+                return values;
+            });
+
+            const normalAvg = calculateNormalAverage(allScoreValues);
+            const neutralResult = calculateNeutralAverage(allScoreValues);
+
+            // Calculate period stats
+            const uniqueDates = [...new Set(child.scores.map(s => s.date))].sort((a, b) => new Date(b) - new Date(a));
+
+            const periodStats = state.settings.periods.map(period => {
+                const relevantDates = uniqueDates.slice(0, period.days);
+                const periodScores = child.scores
+                    .filter(s => relevantDates.includes(s.date))
+                    .flatMap(scoreEntry => {
+                        const values = [];
+                        for (let i = 1; i <= state.settings.categories.length; i++) {
+                            if (scoreEntry[`s${i}`] !== undefined) {
+                                values.push(scoreEntry[`s${i}`]);
+                            }
+                        }
+                        return values;
+                    });
+
+                if (periodScores.length === 0) return null;
+
+                const calcType = state.settings.calcType;
+                let result;
+                let achieved = false;
+
+                if (calcType === 'neutral') {
+                    result = calculateNeutralAverage(periodScores);
+                    if (result) {
+                        // Check cancel threshold
+                        if (state.settings.cancelThreshold > 0 && result.remainingOnes >= state.settings.cancelThreshold) {
+                            achieved = false;
+                        } else if (result.average >= state.settings.threshold) {
+                            achieved = true;
+                        }
+                    }
+                } else {
+                    const avg = calculateNormalAverage(periodScores);
+                    result = { average: avg, remainingOnes: 0 };
+                    if (avg >= state.settings.threshold) {
+                        achieved = true;
+                    }
+                }
+
+                return {
+                    ...result,
+                    achieved,
+                    daysCount: relevantDates.length
+                };
+            });
+
+            return {
+                normalAvg,
+                neutralAvg: neutralResult,
+                periods: periodStats
+            };
+        }
+
+        // Render Functions
+        function loadScoresForDate(date) {
+            state.unsavedChanges = {};
+
+            state.children.forEach(child => {
+                const scoreEntry = child.scores && child.scores.find(s => s.date === date);
+                if (scoreEntry) {
+                    state.unsavedChanges[child.id] = {
+                        scores: {},
+                        descriptions: scoreEntry.descriptions || {},
+                        absent: false
+                    };
+
+                    for (let i = 1; i <= state.settings.categories.length; i++) {
+                        if (scoreEntry[`s${i}`] !== undefined) {
+                            state.unsavedChanges[child.id].scores[i - 1] = scoreEntry[`s${i}`];
+                        }
+                    }
+                }
+            });
+
+            renderChildren();
+        }
+
+        function renderChildren() {
+            if (!state.selectedDate || !state.selectedEvaluator) return;
+
+            const searchTerm = dom.searchInput.value.toLowerCase();
+            const sortValue = dom.sortSelect.value;
+
+            let filtered = state.children.filter(child =>
+                child.name.toLowerCase().includes(searchTerm)
+            );
+
+            // Sort
+            filtered.sort((a, b) => {
+                const statsA = calculateChildStats(a);
+                const statsB = calculateChildStats(b);
+
+                switch(sortValue) {
+                    case 'za': return b.name.localeCompare(a.name);
+                    case 'avg-desc': return (statsB.normalAvg || 0) - (statsA.normalAvg || 0);
+                    case 'avg-asc': return (statsA.normalAvg || 0) - (statsB.normalAvg || 0);
+                    case 'az': default: return a.name.localeCompare(b.name);
+                }
+            });
+
+            if (filtered.length === 0) {
+                dom.childrenList.innerHTML = '<p class="text-center text-text-muted py-10">Çocuk bulunamadı.</p>';
+                return;
+            }
+
+            dom.childrenList.innerHTML = filtered.map(child => {
+                const stats = calculateChildStats(child);
+                const unsaved = state.unsavedChanges[child.id] || { scores: {}, descriptions: {}, absent: false };
+
+                const categoriesHtml = state.settings.categories.map((category, catIndex) => {
+                    const selectedScore = unsaved.scores[catIndex];
+                    const hasDescription = unsaved.descriptions && unsaved.descriptions[catIndex];
+
+                    return `
+                        <div class="category-row border-b border-[var(--card-border)] last:border-b-0 p-3">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="flex items-center gap-2">
+                                    <span class="font-medium text-sm">${category}</span>
+                                    <button onclick="showDescriptionModal('${child.id}', ${catIndex})" class="p-1 hover:bg-[var(--input-bg)] rounded transition">
+                                        ${hasDescription ?
+                                            '<svg class="w-4 h-4 text-[var(--accent)]" fill="currentColor" viewBox="0 0 20 20"><path d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z"/></svg>' :
+                                            '<svg class="w-4 h-4 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/></svg>'
+                                        }
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="flex gap-2 score-buttons" data-child-id="${child.id}" data-category="${catIndex}">
+                                ${[5, 4, 3, 2, 1].map(score => {
+                                    const colors = { 5: '#059669', 4: '#65a30d', 3: '#eab308', 2: '#f97316', 1: '#dc2626' };
+                                    const isSelected = selectedScore === score;
+                                    return `
+                                        <button
+                                            class="score-option flex-1 py-2 rounded-lg font-bold transition ${isSelected ? 'selected' : ''}"
+                                            data-score="${score}"
+                                            ${unsaved.absent ? 'disabled' : ''}
+                                            style="${isSelected ? `background-color: ${colors[score]}; border-color: ${colors[score]};` : ''}"
+                                        >
+                                            ${score}
+                                        </button>
+                                    `;
+                                }).join('')}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                return `
+                    <div class="child-card card p-6 ${unsaved.scores && Object.keys(unsaved.scores).length > 0 ? 'saved' : ''}" data-child-id="${child.id}">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 class="font-bold text-lg">${child.name}</h3>
+                                <div class="text-xs text-text-muted mt-1 space-x-3">
+                                    <span>Normal Ort: <strong class="${getAverageColor(stats.normalAvg)}">${stats.normalAvg !== null ? stats.normalAvg.toFixed(2) : '-'}</strong></span>
+                                    <span>Nötr Ort: <strong class="${getAverageColor(stats.neutralAvg?.average)}">${stats.neutralAvg?.average !== null ? stats.neutralAvg.average.toFixed(2) : '-'}</strong></span>
+                                </div>
+                            </div>
+                            ${state.isAdmin ? `
+                                <button onclick="showDeleteModal('${child.id}', '${child.name.replace(/'/g, "\\'")}')" class="text-text-muted hover:text-red-500 transition p-2 rounded-full">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                </button>
+                            ` : ''}
+                        </div>
+
+                        <div class="space-y-0 border border-[var(--card-border)] rounded-lg overflow-hidden mb-4">
+                            ${categoriesHtml}
+                        </div>
+
+                        <button class="absent-btn w-full py-2.5 border-2 border-[var(--input-border)] rounded-lg font-bold transition ${unsaved.absent ? 'bg-red-500 text-white border-red-500' : 'text-text-muted hover:bg-[var(--input-bg)]'}" data-child-id="${child.id}">
+                            ${unsaved.absent ? 'Yok (İşaretli)' : 'Yok'}
+                        </button>
+                    </div>
+                `;
+            }).join('');
+
+            // Add event listeners
+            dom.childrenList.querySelectorAll('.score-buttons').forEach(container => {
+                container.addEventListener('click', (e) => {
+                    const btn = e.target.closest('.score-option');
+                    if (!btn || btn.disabled) return;
+
+                    const childId = container.dataset.childId;
+                    const categoryIndex = parseInt(container.dataset.category);
+                    const score = parseInt(btn.dataset.score);
+
+                    if (!state.unsavedChanges[childId]) {
+                        state.unsavedChanges[childId] = { scores: {}, descriptions: {}, absent: false };
+                    }
+
+                    // Toggle selection
+                    if (state.unsavedChanges[childId].scores[categoryIndex] === score) {
+                        delete state.unsavedChanges[childId].scores[categoryIndex];
+                    } else {
+                        state.unsavedChanges[childId].scores[categoryIndex] = score;
+                    }
+
+                    // Mark as not absent
+                    state.unsavedChanges[childId].absent = false;
+
+                    // Auto-save to localStorage
+                    localStorage.setItem(`unsaved_${state.selectedDate}`, JSON.stringify(state.unsavedChanges));
+
+                    renderChildren();
+                    checkSaveButton();
+                });
+            });
+
+            dom.childrenList.querySelectorAll('.absent-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const childId = btn.dataset.childId;
+
+                    if (!state.unsavedChanges[childId]) {
+                        state.unsavedChanges[childId] = { scores: {}, descriptions: {}, absent: false };
+                    }
+
+                    state.unsavedChanges[childId].absent = !state.unsavedChanges[childId].absent;
+
+                    if (state.unsavedChanges[childId].absent) {
+                        state.unsavedChanges[childId].scores = {};
+                    }
+
+                    localStorage.setItem(`unsaved_${state.selectedDate}`, JSON.stringify(state.unsavedChanges));
+
+                    renderChildren();
+                    checkSaveButton();
+                });
+            });
+
+            checkSaveButton();
+        }
+
+        function checkSaveButton() {
+            const hasChanges = Object.keys(state.unsavedChanges).length > 0;
+            if (hasChanges) {
+                dom.btnSaveAll.classList.remove('hidden');
+            } else {
+                dom.btnSaveAll.classList.add('hidden');
+            }
+        }
+
+        // Save All
+        dom.btnSaveAll.addEventListener('click', async () => {
+            if (!state.selectedDate || !state.selectedEvaluator) {
+                showToast('Tarih ve değerlendirici bilgisi eksik!', 'error');
+                return;
+            }
+
+            const errors = [];
+
+            // Validate: Check for incomplete entries
+            Object.entries(state.unsavedChanges).forEach(([childId, data]) => {
+                if (data.absent) return; // Skip absent children
+
+                const completedCategories = Object.keys(data.scores).length;
+                if (completedCategories > 0 && completedCategories < state.settings.categories.length) {
+                    const child = state.children.find(c => c.id === childId);
+                    const missingCategories = state.settings.categories
+                        .map((cat, i) => data.scores[i] === undefined ? cat : null)
+                        .filter(Boolean);
+
+                    errors.push(`${child.name}: ${missingCategories.join(', ')} eksik!`);
+                }
+            });
+
+            if (errors.length > 0) {
+                showToast(errors[0], 'error');
+                return;
+            }
+
+            // Check if at least one child has been evaluated
+            const hasAnyScores = Object.values(state.unsavedChanges).some(data =>
+                !data.absent && Object.keys(data.scores).length > 0
+            );
+
+            if (!hasAnyScores) {
+                showToast('Hiçbir değerlendirme yapılmadı!', 'warning');
+                return;
+            }
+
+            // Check permissions for staff
+            if (!state.isAdmin) {
+                const existingScores = state.children.some(child =>
+                    child.scores && child.scores.some(s => s.date === state.selectedDate)
+                );
+
+                if (existingScores) {
+                    showToast('Personel olarak mevcut kayıtları değiştiremezsiniz!', 'error');
+                    return;
+                }
+            }
+
+            // Save to database
+            const updatedChildren = state.children.map(child => {
+                const changes = state.unsavedChanges[child.id];
+                if (!changes) return child;
+
+                if (changes.absent) {
+                    // Remove score for this date
+                    return {
+                        ...child,
+                        scores: (child.scores || []).filter(s => s.date !== state.selectedDate)
+                    };
+                }
+
+                if (Object.keys(changes.scores).length === state.settings.categories.length) {
+                    // Create new score entry
+                    const newEntry = {
+                        date: state.selectedDate,
+                        evaluator: state.selectedEvaluator,
+                        descriptions: changes.descriptions || {}
+                    };
+
+                    // Add scores
+                    Object.entries(changes.scores).forEach(([catIndex, score]) => {
+                        newEntry[`s${parseInt(catIndex) + 1}`] = score;
+                    });
+
+                    // Remove old entry for this date and add new one
+                    const filteredScores = (child.scores || []).filter(s => s.date !== state.selectedDate);
+
+                    return {
+                        ...child,
+                        scores: [newEntry, ...filteredScores]
+                    };
+                }
+
+                return child;
+            });
+
+            state.children = updatedChildren;
+            const success = await saveChildren();
+
+            if (success) {
+                showToast('Tüm değişiklikler kaydedildi!', 'success');
+                state.unsavedChanges = {};
+                localStorage.removeItem(`unsaved_${state.selectedDate}`);
+                renderChildren();
+                renderGains();
+                if (state.isAdmin) {
+                    renderLeaderboard();
+                    renderHistory();
+                }
+            }
+        });
+
+        // Render Gains
+        function renderGains() {
+            const gainsData = state.children.map(child => {
+                const stats = calculateChildStats(child);
+                return {
+                    name: child.name,
+                    periods: stats.periods
+                };
+            });
+
+            const html = state.settings.periods.map((period, periodIndex) => {
+                const achievers = gainsData.filter(data =>
+                    data.periods[periodIndex] && data.periods[periodIndex].achieved
+                );
+
+                return `
+                    <div class="mb-6 last:mb-0">
+                        <h3 class="font-bold text-sm mb-2 text-emerald-500">${period.name}</h3>
+                        ${achievers.length > 0 ? `
+                            <ul class="list-disc list-inside space-y-1 text-sm">
+                                ${achievers.map(a => `<li>${a.name}</li>`).join('')}
+                            </ul>
+                        ` : `
+                            <p class="text-sm text-text-muted">Kazanan yok.</p>
+                        `}
+                    </div>
+                `;
+            }).join('');
+
+            dom.gainsList.innerHTML = html || '<p class="text-sm text-text-muted">Veri yok.</p>';
+        }
+
+        // Render Leaderboard (Admin only)
+        function renderLeaderboard() {
+            if (!state.isAdmin) return;
+
+            const leaderboardData = state.children.map(child => {
+                const stats = calculateChildStats(child);
+                return {
+                    name: child.name,
+                    normalAvg: stats.normalAvg,
+                    neutralAvg: stats.neutralAvg?.average
+                };
+            }).filter(d => d.normalAvg !== null);
+
+            leaderboardData.sort((a, b) => (b.neutralAvg || 0) - (a.neutralAvg || 0));
+
+            if (leaderboardData.length === 0) {
+                dom.leaderboardList.innerHTML = '<p class="text-sm text-text-muted">Veri yok.</p>';
+                return;
+            }
+
+            const html = `
+                <div class="space-y-3">
+                    ${leaderboardData.slice(0, 5).map((data, i) => `
+                        <div class="flex items-center justify-between p-3 bg-[var(--input-bg)] rounded-lg">
+                            <div class="flex items-center gap-3">
+                                <span class="text-2xl font-bold ${i === 0 ? 'text-yellow-500' : i === 1 ? 'text-gray-400' : i === 2 ? 'text-orange-600' : 'text-text-muted'}">#${i + 1}</span>
+                                <span class="font-medium">${data.name}</span>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-bold text-lg ${getAverageColor(data.neutralAvg)}">${data.neutralAvg?.toFixed(2) || '-'}</p>
+                                <p class="text-xs text-text-muted">Nötr Ort.</p>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+
+            dom.leaderboardList.innerHTML = html;
+        }
+
+        // Render History (Admin only)
+        function renderHistory() {
+            if (!state.isAdmin) return;
+
+            const allScores = state.children.flatMap(child =>
+                (child.scores || []).map(s => ({
+                    ...s,
+                    childId: child.id,
+                    childName: child.name
+                }))
+            );
+
+            const groupedByDate = {};
+            allScores.forEach(score => {
+                if (!groupedByDate[score.date]) {
+                    groupedByDate[score.date] = [];
+                }
+                groupedByDate[score.date].push(score);
+            });
+
+            const sortedDates = Object.keys(groupedByDate).sort((a, b) => new Date(b) - new Date(a));
+
+            if (sortedDates.length === 0) {
+                dom.historyList.innerHTML = '<p class="text-center text-text-muted py-10">Kayıt yok.</p>';
+                return;
+            }
+
+            const html = sortedDates.map(date => {
+                const scores = groupedByDate[date];
+                const evaluator = scores[0]?.evaluator || 'Bilinmiyor';
+
+                const tableRows = scores.map(entry => {
+                    let rowHtml = `<td class="px-3 py-2 font-medium">${entry.childName}</td>`;
+
+                    for (let i = 1; i <= state.settings.categories.length; i++) {
+                        const score = entry[`s${i}`];
+                        const colors = { 5: 'bg-emerald-500/10 text-emerald-500', 4: 'bg-lime-500/10 text-lime-500', 3: 'bg-yellow-500/10 text-yellow-500', 2: 'bg-orange-500/10 text-orange-500', 1: 'bg-red-500/10 text-red-500' };
+                        rowHtml += `<td class="px-3 py-2 text-center"><span class="px-2 py-1 rounded ${colors[score] || ''} font-bold text-sm">${score || '-'}</span></td>`;
+                    }
+
+                    return `<tr class="hover:bg-[var(--input-bg)]">${rowHtml}</tr>`;
+                }).join('');
+
+                return `
+                    <details class="bg-[var(--input-bg)] rounded-lg overflow-hidden">
+                        <summary class="p-3 cursor-pointer font-medium flex justify-between items-center hover:bg-[var(--input-bg)]">
+                            <span>${formatDate(date)}</span>
+                            <span class="text-xs text-text-muted">${evaluator}</span>
+                        </summary>
+                        <div class="p-3 border-t border-[var(--card-border)] overflow-x-auto">
+                            <table class="min-w-full text-sm">
+                                <thead class="bg-[var(--card-bg)]">
+                                    <tr>
+                                        <th class="px-3 py-2 text-left text-xs font-bold uppercase">Çocuk</th>
+                                        ${state.settings.categories.map(cat => `<th class="px-3 py-2 text-center text-xs font-bold uppercase">${cat}</th>`).join('')}
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-[var(--card-border)]">${tableRows}</tbody>
+                            </table>
+                        </div>
+                    </details>
+                `;
+            }).join('');
+
+            dom.historyList.innerHTML = html;
+        }
+
+        function formatDate(dateStr) {
+            const date = new Date(dateStr + 'T00:00:00');
+            return date.toLocaleDateString('tr-TR', { year: 'numeric', month: 'long', day: 'numeric' });
+        }
+
+        // Search & Sort
+        dom.searchInput.addEventListener('input', renderChildren);
+        dom.sortSelect.addEventListener('change', renderChildren);
+
+        // Initialize app
+        init();
+    </script>
+
+</body>
+</html>
