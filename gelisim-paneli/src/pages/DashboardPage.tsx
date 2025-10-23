@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import DateSelectorModal from '../components/DateSelectorModal';
 import EvaluatorSelectorModal from '../components/EvaluatorSelectorModal';
+import DarkModeToggle from '../components/DarkModeToggle';
 
 export default function DashboardPage() {
   const { user, isAdmin, signOut } = useAuth();
@@ -50,12 +51,15 @@ export default function DashboardPage() {
                 {isAdmin ? '🔑 Yönetici' : '👤 Personel'} - {user?.email || 'Anonim'}
               </p>
             </div>
-            <button
-              onClick={handleLogout}
-              className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition"
-            >
-              Çıkış
-            </button>
+            <div className="flex items-center gap-3">
+              <DarkModeToggle />
+              <button
+                onClick={handleLogout}
+                className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition"
+              >
+                Çıkış
+              </button>
+            </div>
           </div>
         </header>
 

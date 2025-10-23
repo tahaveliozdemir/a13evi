@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useEvaluation } from '../contexts/EvaluationContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
 import { formatDate } from '../utils/calculations';
 import ChildCardV2 from '../components/ChildCardV2';
 import DescriptionModal from '../components/DescriptionModal';
@@ -10,6 +11,7 @@ export default function EvaluationPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const { isAdmin } = useAuth();
+  const { showToast } = useToast();
   const {
     selectedDate,
     selectedEvaluator,
@@ -58,11 +60,11 @@ export default function EvaluationPage() {
   const handleSave = async () => {
     const result = await saveAll(isAdmin);
     if (result.success) {
-      alert('✅ Tüm değişiklikler kaydedildi!');
+      showToast('Tüm değişiklikler kaydedildi!', 'success');
       // Optionally navigate back to dashboard
       // navigate('/dashboard');
     } else {
-      alert(`❌ ${result.error}`);
+      showToast(result.error || 'Kayıt başarısız!', 'error');
     }
   };
 
@@ -132,7 +134,7 @@ export default function EvaluationPage() {
         {isAdmin && (
           <div className="mb-6">
             <button
-              onClick={() => alert('Çocuk ekleme özelliği yakında...')}
+              onClick={() => showToast('Çocuk ekleme özelliği yakında...', 'info')}
               className="w-full md:w-auto bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition flex items-center justify-center gap-2"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
@@ -188,7 +190,7 @@ export default function EvaluationPage() {
                   });
                 }}
                 isAdmin={isAdmin}
-                onDelete={() => alert('Silme özelliği yakında...')}
+                onDelete={() => showToast('Silme özelliği yakında...', 'info')}
                 onQuickFill={(score) => quickFillChild(child.id, score)}
                 onCopyLast={() => copyLastEvaluation(child.id)}
               />

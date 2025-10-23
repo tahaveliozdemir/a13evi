@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import DarkModeToggle from '../components/DarkModeToggle';
 
 export default function LoginPage() {
   const { isAdmin, signIn } = useAuth();
@@ -38,6 +39,11 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
+      {/* Dark Mode Toggle */}
+      <div className="fixed top-4 right-4 z-50">
+        <DarkModeToggle />
+      </div>
+
       <div className="max-w-md w-full space-y-8">
         {/* Header */}
         <div className="text-center">
