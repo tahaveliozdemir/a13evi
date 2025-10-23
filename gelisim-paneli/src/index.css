@@ -1,0 +1,50 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --card-bg: white;
+  --card-border: #e2e8f0;
+  --input-bg: #f1f5f9;
+  --input-border: #cbd5e1;
+  --accent: #2563eb;
+  --accent-hover: #1d4ed8;
+  --text-muted: #64748b;
+}
+
+html.dark {
+  --background: #020617;
+  --foreground: #f8fafc;
+  --card-bg: #0f172a;
+  --card-border: #1e293b;
+  --input-bg: #1e293b;
+  --input-border: #334155;
+  --accent: #60a5fa;
+  --accent-hover: #3b82f6;
+  --text-muted: #94a3b8;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: var(--background);
+  color: var(--foreground);
+  transition: background-color 0.3s, color 0.3s;
+}
+
+@layer utilities {
+  .card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 1.25rem;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02), 0 2px 4px -2px rgba(0,0,0,0.02);
+    transition: background-color 0.3s, border-color 0.3s;
+  }
+}
