@@ -35,16 +35,16 @@ export default function StatsPage() {
   }
 
   // Export handlers
-  const handleExportExcel = () => {
+  const handleExportExcel = async () => {
     if (!settings) return;
     try {
       if (selectedChild === 'all') {
-        exportToExcel(children, settings);
+        await exportToExcel(children, settings);
         showToast('Excel raporu indirildi!', 'success');
       } else {
         const child = children.find(c => c.id === selectedChild);
         if (child) {
-          exportDetailedExcel(child, settings);
+          await exportDetailedExcel(child, settings);
           showToast(`${child.name} için Excel raporu indirildi!`, 'success');
         }
       }

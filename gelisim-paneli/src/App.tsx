@@ -6,6 +6,7 @@ import EvaluationPage from './pages/EvaluationPage';
 import SettingsPage from './pages/SettingsPage';
 import StatsPage from './pages/StatsPage';
 import ToastContainer from './components/ToastContainer';
+import ErrorBoundary from './components/ErrorBoundary';
 
 // Protected Route Component
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -53,52 +54,54 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        {/* Public Route */}
-        <Route path="/" element={<LoginPage />} />
+    <ErrorBoundary>
+      <BrowserRouter>
+        <Routes>
+          {/* Public Route */}
+          <Route path="/" element={<LoginPage />} />
 
-        {/* Protected Routes */}
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <DashboardPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/evaluation"
-          element={
-            <ProtectedRoute>
-              <EvaluationPage />
-            </ProtectedRoute>
-          }
-        />
+          {/* Protected Routes */}
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <DashboardPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/evaluation"
+            element={
+              <ProtectedRoute>
+                <EvaluationPage />
+              </ProtectedRoute>
+            }
+          />
 
-        {/* Admin Only Routes */}
-        <Route
-          path="/settings"
-          element={
-            <AdminRoute>
-              <SettingsPage />
-            </AdminRoute>
-          }
-        />
-        <Route
-          path="/stats"
-          element={
-            <AdminRoute>
-              <StatsPage />
-            </AdminRoute>
-          }
-        />
+          {/* Admin Only Routes */}
+          <Route
+            path="/settings"
+            element={
+              <AdminRoute>
+                <SettingsPage />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/stats"
+            element={
+              <AdminRoute>
+                <StatsPage />
+              </AdminRoute>
+            }
+          />
 
-        {/* Fallback */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-      <ToastContainer />
-    </BrowserRouter>
+          {/* Fallback */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+        <ToastContainer />
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 }
 

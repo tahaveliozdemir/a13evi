@@ -1,109 +1,135 @@
 import jsPDF from 'jspdf';
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 import type { Child, AppSettings } from '../types';
 import { calculateChildStats } from './calculations';
 
 /**
- * Export children data to Excel
+ * Export children data to Excel using ExcelJS (secure)
  */
-export function exportToExcel(children: Child[], settings: AppSettings) {
-  // Prepare data for Excel
-  const data = children.map(child => {
-    const stats = calculateChildStats(child, settings);
+export async function exportToExcel(children: Child[], settings: AppSettings) {
+  // Create workbook
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet('Değerlendirme Raporu');
 
-    // Build period columns from settings
-    const periodColumns = settings.periods.reduce((acc, periodDef, index) => {
-      const periodStat = stats.periods[index];
-      acc[periodDef.name] = periodStat?.achieved ? 'Kazandı' : 'Devam Ediyor';
-      return acc;
-    }, {} as Record<string, string>);
+  // Build period columns from settings
+  const periodColumns = settings.periods.map(p => p.name);
 
-    return {
-      'İsim': child.name,
-      'Toplam Değerlendirme': child.scores?.length || 0,
-      'Nötr Ortalama': stats.neutralAvg?.average.toFixed(2) || '-',
-      'Normal Ortalama': stats.normalAvg?.toFixed(2) || '-',
-      'Durum': (stats.neutralAvg?.average || 0) >= settings.threshold ? 'Başarılı' : 'Gelişmeli',
-      ...periodColumns
-    };
-  });
-
-  // Create worksheet
-  const worksheet = XLSX.utils.json_to_sheet(data);
-
-  // Set column widths
-  const colWidths = [
-    { wch: 20 }, // İsim
-    { wch: 20 }, // Toplam Değerlendirme
-    { wch: 15 }, // Nötr Ortalama
-    { wch: 15 }, // Normal Ortalama
-    { wch: 15 }, // Durum
+  // Define columns
+  worksheet.columns = [
+    { header: 'İsim', key: 'name', width: 25 },
+    { header: 'Toplam Değerlendirme', key: 'totalEval', width: 22 },
+    { header: 'Nötr Ortalama', key: 'neutralAvg', width: 18 },
+    { header: 'Normal Ortalama', key: 'normalAvg', width: 18 },
+    { header: 'Durum', key: 'status', width: 15 },
+    ...periodColumns.map(name => ({ header: name, key: name, width: 20 }))
   ];
 
-  // Add widths for period columns
-  settings.periods.forEach(() => {
-    colWidths.push({ wch: 20 });
+  // Style header row
+  worksheet.getRow(1).font = { bold: true, size: 12 };
+  worksheet.getRow(1).fill = {
+    type: 'pattern',
+    pattern: 'solid',
+    fgColor: { argb: 'FF4B5563' }
+  };
+  worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+
+  // Add data rows
+  children.forEach(child => {
+    const stats = calculateChildStats(child, settings);
+
+    const rowData: any = {
+      name: child.name,
+      totalEval: child.scores?.length || 0,
+      neutralAvg: stats.neutralAvg?.average.toFixed(2) || '-',
+      normalAvg: stats.normalAvg?.toFixed(2) || '-',
+      status: (stats.neutralAvg?.average || 0) >= settings.threshold ? 'Başarılı' : 'Gelişmeli'
+    };
+
+    // Add period data
+    settings.periods.forEach((periodDef, index) => {
+      const periodStat = stats.periods[index];
+      rowData[periodDef.name] = periodStat?.achieved ? 'Kazandı' : 'Devam Ediyor';
+    });
+
+    const row = worksheet.addRow(rowData);
+
+    // Color code status
+    const statusCell = row.getCell('status');
+    if (rowData.status === 'Başarılı') {
+      statusCell.font = { color: { argb: 'FF10B981' }, bold: true };
+    } else {
+      statusCell.font = { color: { argb: 'FFF59E0B' }, bold: true };
+    }
   });
-
-  worksheet['!cols'] = colWidths;
-
-  // Create workbook
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, 'Değerlendirme Raporu');
 
   // Generate filename with date
   const date = new Date().toLocaleDateString('tr-TR').replace(/\./g, '-');
   const filename = `Degerlendirme_Raporu_${date}.xlsx`;
 
-  // Save file
-  XLSX.writeFile(workbook, filename);
+  // Write file
+  const buffer = await workbook.xlsx.writeBuffer();
+  const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  link.click();
+  window.URL.revokeObjectURL(url);
 }
 
 /**
  * Export detailed child report to Excel
  */
-export function exportDetailedExcel(child: Child, settings: AppSettings) {
-  const data = child.scores?.map(score => {
-    const row: Record<string, any> = {
-      'Tarih': new Date(score.date).toLocaleDateString('tr-TR'),
-      'Değerlendiren': score.evaluator
-    };
+export async function exportDetailedExcel(child: Child, settings: AppSettings) {
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet(child.name);
 
-    // Add category scores
-    settings.categories.forEach((category, index) => {
-      const scoreKey = `s${index + 1}` as keyof typeof score;
-      row[category] = score[scoreKey] || '-';
-    });
-
-    return row;
-  }) || [];
-
-  // Create worksheet
-  const worksheet = XLSX.utils.json_to_sheet(data);
-
-  // Set column widths
-  const colWidths = [
-    { wch: 12 }, // Tarih
-    { wch: 20 }, // Değerlendiren
+  // Define columns
+  const columns = [
+    { header: 'Tarih', key: 'date', width: 15 },
+    { header: 'Değerlendiren', key: 'evaluator', width: 25 },
+    ...settings.categories.map((cat, i) => ({ header: cat, key: `s${i}`, width: 20 }))
   ];
 
-  // Add widths for category columns
-  settings.categories.forEach(() => {
-    colWidths.push({ wch: 20 });
+  worksheet.columns = columns;
+
+  // Style header
+  worksheet.getRow(1).font = { bold: true, size: 12 };
+  worksheet.getRow(1).fill = {
+    type: 'pattern',
+    pattern: 'solid',
+    fgColor: { argb: 'FF4B5563' }
+  };
+  worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+
+  // Add data
+  child.scores?.forEach(score => {
+    const rowData: any = {
+      date: new Date(score.date).toLocaleDateString('tr-TR'),
+      evaluator: score.evaluator
+    };
+
+    settings.categories.forEach((_, index) => {
+      const scoreKey = `s${index + 1}` as keyof typeof score;
+      rowData[`s${index}`] = score[scoreKey] || '-';
+    });
+
+    worksheet.addRow(rowData);
   });
-
-  worksheet['!cols'] = colWidths;
-
-  // Create workbook
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, child.name);
 
   // Generate filename
   const date = new Date().toLocaleDateString('tr-TR').replace(/\./g, '-');
   const filename = `${child.name}_Detayli_Rapor_${date}.xlsx`;
 
-  // Save file
-  XLSX.writeFile(workbook, filename);
+  // Write file
+  const buffer = await workbook.xlsx.writeBuffer();
+  const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  link.click();
+  window.URL.revokeObjectURL(url);
 }
 
 /**
