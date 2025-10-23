@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { getSettings, updateSettings } from '../services/settingsService';
+import LoadingSpinner from '../components/LoadingSpinner';
 import type { AppSettings } from '../types';
 
 export default function SettingsPage() {
@@ -152,14 +153,7 @@ export default function SettingsPage() {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent mx-auto mb-4"></div>
-          <p className="text-text-muted">Yükleniyor...</p>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
   if (!settings) return null;

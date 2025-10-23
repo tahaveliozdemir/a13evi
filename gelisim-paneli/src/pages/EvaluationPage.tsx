@@ -9,6 +9,7 @@ import ChildCardV2 from '../components/ChildCardV2';
 import DescriptionModal from '../components/DescriptionModal';
 import AddChildModal from '../components/AddChildModal';
 import DeleteChildModal from '../components/DeleteChildModal';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 export default function EvaluationPage() {
   const location = useLocation();
@@ -116,14 +117,7 @@ export default function EvaluationPage() {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent mx-auto mb-4"></div>
-          <p className="text-text-muted">Yükleniyor...</p>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
   if (!selectedDate || !selectedEvaluator || !settings) {

@@ -3,6 +3,7 @@ import { lazy, Suspense } from 'react';
 import { useAuth } from './contexts/AuthContext';
 import ToastContainer from './components/ToastContainer';
 import ErrorBoundary from './components/ErrorBoundary';
+import LoadingSpinner from './components/LoadingSpinner';
 
 // Lazy load pages for code splitting
 const LoginPage = lazy(() => import('./pages/LoginPage'));
@@ -55,23 +56,11 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-// Loading fallback component
-function LoadingFallback() {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent mx-auto mb-4"></div>
-        <p className="text-text-muted">Yükleniyor...</p>
-      </div>
-    </div>
-  );
-}
-
 function App() {
   return (
     <ErrorBoundary>
       <BrowserRouter>
-        <Suspense fallback={<LoadingFallback />}>
+        <Suspense fallback={<LoadingSpinner />}>
           <Routes>
             {/* Public Route */}
             <Route path="/" element={<LoginPage />} />

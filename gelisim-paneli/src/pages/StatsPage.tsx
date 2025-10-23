@@ -5,6 +5,7 @@ import { useEvaluation } from '../contexts/EvaluationContext';
 import { useToast } from '../contexts/ToastContext';
 import { calculateChildStats } from '../utils/calculations';
 import { exportToExcel, exportToPDF, exportDetailedExcel, exportDetailedPDF } from '../utils/export';
+import LoadingSpinner from '../components/LoadingSpinner';
 import {
   LineChart,
   Line,
@@ -208,14 +209,7 @@ export default function StatsPage() {
   }, [children, settings, selectedChild]);
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent mx-auto mb-4"></div>
-          <p className="text-text-muted">Yükleniyor...</p>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
   return (

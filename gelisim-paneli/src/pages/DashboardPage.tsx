@@ -5,6 +5,7 @@ import { useEvaluation } from '../contexts/EvaluationContext';
 import DateSelectorModal from '../components/DateSelectorModal';
 import EvaluatorSelectorModal from '../components/EvaluatorSelectorModal';
 import DarkModeToggle from '../components/DarkModeToggle';
+import LoadingSpinner from '../components/LoadingSpinner';
 import { calculateChildStats } from '../utils/calculations';
 import type { Child } from '../types';
 
@@ -185,9 +186,8 @@ export default function DashboardPage() {
 
         {/* Statistics Cards */}
         {loading ? (
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent mx-auto mb-4"></div>
-            <p className="text-text-muted">İstatistikler yükleniyor...</p>
+          <div className="py-12">
+            <LoadingSpinner message="İstatistikler yükleniyor..." fullScreen={false} />
           </div>
         ) : (
           <>
