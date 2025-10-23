@@ -2,7 +2,9 @@ import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useEvaluation } from '../contexts/EvaluationContext';
+import { useToast } from '../contexts/ToastContext';
 import { calculateChildStats } from '../utils/calculations';
+import { exportToExcel, exportToPDF, exportDetailedExcel, exportDetailedPDF } from '../utils/export';
 import {
   LineChart,
   Line,
@@ -23,6 +25,7 @@ export default function StatsPage() {
   const navigate = useNavigate();
   const { isAdmin } = useAuth();
   const { children, settings, loading } = useEvaluation();
+  const { showToast } = useToast();
   const [selectedChild, setSelectedChild] = useState<string>('all');
 
   // Redirect if not admin
@@ -30,6 +33,43 @@ export default function StatsPage() {
     navigate('/dashboard');
     return null;
   }
+
+  // Export handlers
+  const handleExportExcel = () => {
+    if (!settings) return;
+    try {
+      if (selectedChild === 'all') {
+        exportToExcel(children, settings);
+        showToast('Excel raporu indirildi!', 'success');
+      } else {
+        const child = children.find(c => c.id === selectedChild);
+        if (child) {
+          exportDetailedExcel(child, settings);
+          showToast(`${child.name} için Excel raporu indirildi!`, 'success');
+        }
+      }
+    } catch (error) {
+      showToast('Excel dışa aktarma başarısız!', 'error');
+    }
+  };
+
+  const handleExportPDF = () => {
+    if (!settings) return;
+    try {
+      if (selectedChild === 'all') {
+        exportToPDF(children, settings);
+        showToast('PDF raporu indirildi!', 'success');
+      } else {
+        const child = children.find(c => c.id === selectedChild);
+        if (child) {
+          exportDetailedPDF(child, settings);
+          showToast(`${child.name} için PDF raporu indirildi!`, 'success');
+        }
+      }
+    } catch (error) {
+      showToast('PDF dışa aktarma başarısız!', 'error');
+    }
+  };
 
   // Calculate trend data (last 30 days)
   const trendData = useMemo(() => {
@@ -182,17 +222,41 @@ export default function StatsPage() {
       <div className="max-w-7xl mx-auto p-4 md:p-8">
         {/* Header */}
         <div className="card p-6 mb-6">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div>
               <h1 className="text-3xl font-bold">Grafikler ve Trendler</h1>
               <p className="text-text-muted mt-1">Detaylı analiz ve görselleştirme</p>
             </div>
-            <button
-              onClick={() => navigate('/dashboard')}
-              className="bg-gray-500/20 hover:bg-gray-500/30 px-4 py-2 rounded-lg font-medium transition"
-            >
-              Geri Dön
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleExportExcel}
+                className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg font-medium transition flex items-center gap-2"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
+                Excel
+              </button>
+              <button
+                onClick={handleExportPDF}
+                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-medium transition flex items-center gap-2"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
+                PDF
+              </button>
+              <button
+                onClick={() => navigate('/dashboard')}
+                className="bg-gray-500/20 hover:bg-gray-500/30 px-4 py-2 rounded-lg font-medium transition"
+              >
+                Geri Dön
+              </button>
+            </div>
           </div>
         </div>
 
