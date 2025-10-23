@@ -18,6 +18,8 @@ interface EvaluationContextType {
   updateScore: (childId: string, categoryIndex: number, score: number) => void;
   toggleAbsent: (childId: string) => void;
   updateDescription: (childId: string, categoryIndex: number, description: string) => void;
+  quickFillChild: (childId: string, score: number) => void;
+  copyLastEvaluation: (childId: string) => void;
   saveAll: (isAdmin: boolean) => Promise<{ success: boolean; error?: string }>;
   refreshChildren: () => Promise<void>;
   hasUnsavedChanges: () => boolean;
@@ -171,6 +173,67 @@ export function EvaluationProvider({ children: childrenProp }: { children: React
     });
   };
 
+  const quickFillChild = (childId: string, score: number) => {
+    if (!settings) return;
+
+    setUnsavedChanges(prev => {
+      const childChanges = prev[childId] || { scores: {}, descriptions: {}, absent: false };
+      const newScores: { [key: number]: number } = {};
+
+      // Fill all categories with the same score
+      for (let i = 0; i < settings.categories.length; i++) {
+        newScores[i] = score;
+      }
+
+      return {
+        ...prev,
+        [childId]: {
+          ...childChanges,
+          scores: newScores,
+          absent: false
+        }
+      };
+    });
+  };
+
+  const copyLastEvaluation = (childId: string) => {
+    if (!settings) return;
+
+    const child = children.find(c => c.id === childId);
+    if (!child || !child.scores || child.scores.length === 0) return;
+
+    const lastScore = child.scores[0];
+
+    setUnsavedChanges(prev => {
+      const childChanges = prev[childId] || { scores: {}, descriptions: {}, absent: false };
+      const newScores: { [key: number]: number } = {};
+      const newDescriptions: { [key: number]: string } = {};
+
+      // Copy scores from last evaluation
+      for (let i = 0; i < settings.categories.length; i++) {
+        const scoreKey = `s${i + 1}` as keyof typeof lastScore;
+        if (lastScore[scoreKey] !== undefined) {
+          newScores[i] = lastScore[scoreKey] as number;
+        }
+      }
+
+      // Copy descriptions if any
+      if (lastScore.descriptions) {
+        Object.assign(newDescriptions, lastScore.descriptions);
+      }
+
+      return {
+        ...prev,
+        [childId]: {
+          ...childChanges,
+          scores: newScores,
+          descriptions: newDescriptions,
+          absent: false
+        }
+      };
+    });
+  };
+
   const saveAll = async (isAdmin: boolean): Promise<{ success: boolean; error?: string }> => {
     if (!selectedDate || !selectedEvaluator) {
       return { success: false, error: 'Tarih ve değerlendirici bilgisi eksik!' };
@@ -307,6 +370,8 @@ export function EvaluationProvider({ children: childrenProp }: { children: React
         updateScore,
         toggleAbsent,
         updateDescription,
+        quickFillChild,
+        copyLastEvaluation,
         saveAll,
         refreshChildren,
         hasUnsavedChanges

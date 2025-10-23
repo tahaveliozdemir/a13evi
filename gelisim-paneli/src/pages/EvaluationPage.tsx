@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useEvaluation } from '../contexts/EvaluationContext';
 import { useAuth } from '../contexts/AuthContext';
 import { formatDate } from '../utils/calculations';
-import ChildCard from '../components/ChildCard';
+import ChildCardV2 from '../components/ChildCardV2';
 import DescriptionModal from '../components/DescriptionModal';
 
 export default function EvaluationPage() {
@@ -22,6 +22,8 @@ export default function EvaluationPage() {
     updateScore,
     toggleAbsent,
     updateDescription,
+    quickFillChild,
+    copyLastEvaluation,
     saveAll,
     hasUnsavedChanges
   } = useEvaluation();
@@ -169,7 +171,7 @@ export default function EvaluationPage() {
             </div>
           ) : (
             filteredChildren.map(child => (
-              <ChildCard
+              <ChildCardV2
                 key={child.id}
                 child={child}
                 settings={settings}
@@ -187,6 +189,8 @@ export default function EvaluationPage() {
                 }}
                 isAdmin={isAdmin}
                 onDelete={() => alert('Silme özelliği yakında...')}
+                onQuickFill={(score) => quickFillChild(child.id, score)}
+                onCopyLast={() => copyLastEvaluation(child.id)}
               />
             ))
           )}
