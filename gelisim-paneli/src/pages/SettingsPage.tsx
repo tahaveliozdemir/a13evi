@@ -328,97 +328,211 @@ export default function SettingsPage() {
         {/* Rules Tab */}
         {activeTab === 'rules' && (
           <div className="card p-6">
-            <h2 className="text-2xl font-bold mb-6">Değerlendirme Kuralları</h2>
+            <h2 className="text-2xl font-bold mb-6">Değerlendirme Kuralları (0-1-2 Sistemi)</h2>
 
             <div className="space-y-6">
-              {/* Calculation Type */}
-              <div className="p-4 bg-input-bg rounded-lg border border-input-border">
-                <label className="block text-sm font-medium mb-2">Hesaplama Tipi</label>
-                <select
-                  value={settings.calcType}
-                  onChange={(e) => setSettings({ ...settings, calcType: e.target.value as 'neutral' | 'normal' })}
-                  className="w-full px-4 py-2 bg-background border border-input-border rounded-lg focus:ring-2 focus:ring-accent transition"
-                >
-                  <option value="neutral">Nötr Ortalama (Veto kuralı ile)</option>
-                  <option value="normal">Normal Ortalama</option>
-                </select>
-                <p className="text-sm text-text-muted mt-2">
-                  Nötr ortalamada belirli sayıda 5 puan, belirli sayıda 1 puanı iptal eder.
-                </p>
+              {/* Scoring System Info */}
+              <div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                <h3 className="font-bold mb-2 text-blue-600 dark:text-blue-400">Puanlama Sistemi:</h3>
+                <div className="space-y-1 text-sm">
+                  <p><strong>2</strong> = Başarılı (Yeşil)</p>
+                  <p><strong>1</strong> = Orta (Sarı)</p>
+                  <p><strong>0</strong> = Yetersiz (Kırmızı)</p>
+                </div>
               </div>
 
               {/* Threshold */}
               <div className="p-4 bg-input-bg rounded-lg border border-input-border">
-                <label className="block text-sm font-medium mb-2">Başarı Eşiği</label>
+                <label className="block text-sm font-medium mb-3">
+                  Kazanım Eşiği: <strong className="text-accent">{settings.threshold.toFixed(2)}</strong>
+                </label>
                 <input
-                  type="number"
-                  step="0.01"
+                  type="range"
+                  step="0.1"
                   min="0"
-                  max="5"
+                  max="2"
                   value={settings.threshold}
                   onChange={(e) => setSettings({ ...settings, threshold: Number(e.target.value) })}
-                  className="w-full px-4 py-2 bg-background border border-input-border rounded-lg focus:ring-2 focus:ring-accent transition"
+                  className="w-full"
                 />
+                <div className="flex justify-between text-xs text-text-muted mt-1">
+                  <span>0.0</span>
+                  <span>1.0</span>
+                  <span>2.0</span>
+                </div>
                 <p className="text-sm text-text-muted mt-2">
-                  Bu değerin üzerinde ortalamaya sahip çocuklar başarılı sayılır.
+                  Bu değerin üzerinde ortalamaya sahip çocuklar kazanım elde etmiş sayılır.
                 </p>
               </div>
 
-              {/* Veto Rules (only for neutral) */}
-              {settings.calcType === 'neutral' && (
-                <>
-                  <div className="p-4 bg-input-bg rounded-lg border border-input-border">
-                    <label className="block text-sm font-medium mb-2">Veto Kuralı - 5 Puan Sayısı</label>
-                    <input
-                      type="number"
-                      min="1"
-                      value={settings.vetoFives}
-                      onChange={(e) => setSettings({ ...settings, vetoFives: Number(e.target.value) })}
-                      className="w-full px-4 py-2 bg-background border border-input-border rounded-lg focus:ring-2 focus:ring-accent transition"
+              {/* Veto Rule */}
+              <div className="p-4 bg-input-bg rounded-lg border border-input-border">
+                <div className="flex items-center justify-between mb-3">
+                  <label className="text-sm font-medium">Veto Kuralı</label>
+                  <button
+                    onClick={() => setSettings({
+                      ...settings,
+                      vetoRule: { ...settings.vetoRule, enabled: !settings.vetoRule.enabled }
+                    })}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
+                      settings.vetoRule.enabled ? 'bg-accent' : 'bg-gray-300 dark:bg-gray-600'
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
+                        settings.vetoRule.enabled ? 'translate-x-6' : 'translate-x-1'
+                      }`}
                     />
-                    <p className="text-sm text-text-muted mt-2">
-                      Kaç tane 5 puan, belirtilen sayıda 1 puanı iptal eder.
-                    </p>
-                  </div>
+                  </button>
+                </div>
 
-                  <div className="p-4 bg-input-bg rounded-lg border border-input-border">
-                    <label className="block text-sm font-medium mb-2">Veto Kuralı - 1 Puan Sayısı</label>
-                    <input
-                      type="number"
-                      min="1"
-                      value={settings.vetoOnes}
-                      onChange={(e) => setSettings({ ...settings, vetoOnes: Number(e.target.value) })}
-                      className="w-full px-4 py-2 bg-background border border-input-border rounded-lg focus:ring-2 focus:ring-accent transition"
+                {settings.vetoRule.enabled && (
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-xs text-text-muted mb-1">
+                        Kaç tane 0 varsa ödül alamaz?
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="10"
+                        value={settings.vetoRule.zeroCount}
+                        onChange={(e) => setSettings({
+                          ...settings,
+                          vetoRule: { ...settings.vetoRule, zeroCount: Number(e.target.value) }
+                        })}
+                        className="w-full px-3 py-2 bg-background border border-input-border rounded-lg focus:ring-2 focus:ring-accent transition text-sm"
+                      />
+                    </div>
+                    <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded text-xs">
+                      <strong>Örnek:</strong> {settings.vetoRule.zeroCount} veya daha fazla 0 varsa, ortalama ne olursa olsun kazanım sağlanamaz.
+                      <br />
+                      <span className="text-text-muted">[2, 2, 1, 0, 0, 0] → Veto! Ortalama hesaplanır ama kazanım yok.</span>
+                    </div>
+                  </div>
+                )}
+
+                {!settings.vetoRule.enabled && (
+                  <p className="text-xs text-text-muted">
+                    Veto kuralı kapalı. Tüm puanlar ortala hesaba dahil edilir.
+                  </p>
+                )}
+              </div>
+
+              {/* Cancel Rule */}
+              <div className="p-4 bg-input-bg rounded-lg border border-input-border">
+                <div className="flex items-center justify-between mb-3">
+                  <label className="text-sm font-medium">İptal Kuralı</label>
+                  <button
+                    onClick={() => setSettings({
+                      ...settings,
+                      cancelRule: { ...settings.cancelRule, enabled: !settings.cancelRule.enabled }
+                    })}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
+                      settings.cancelRule.enabled ? 'bg-accent' : 'bg-gray-300 dark:bg-gray-600'
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
+                        settings.cancelRule.enabled ? 'translate-x-6' : 'translate-x-1'
+                      }`}
                     />
-                    <p className="text-sm text-text-muted mt-2">
-                      Belirtilen sayıda 5 puan, kaç tane 1 puanı iptal eder.
-                    </p>
-                  </div>
+                  </button>
+                </div>
 
-                  <div className="p-4 bg-input-bg rounded-lg border border-input-border">
-                    <label className="block text-sm font-medium mb-2">İptal Eşiği</label>
-                    <input
-                      type="number"
-                      min="0"
-                      value={settings.cancelThreshold}
-                      onChange={(e) => setSettings({ ...settings, cancelThreshold: Number(e.target.value) })}
-                      className="w-full px-4 py-2 bg-background border border-input-border rounded-lg focus:ring-2 focus:ring-accent transition"
-                    />
-                    <p className="text-sm text-text-muted mt-2">
-                      Veto kuralı uygulandıktan sonraki iptal eşiği.
-                    </p>
+                {settings.cancelRule.enabled && (
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs text-text-muted mb-1">
+                          Kaç tane {settings.cancelRule.highScore}
+                        </label>
+                        <input
+                          type="number"
+                          min="1"
+                          max="10"
+                          value={settings.cancelRule.highCount}
+                          onChange={(e) => setSettings({
+                            ...settings,
+                            cancelRule: { ...settings.cancelRule, highCount: Number(e.target.value) }
+                          })}
+                          className="w-full px-3 py-2 bg-background border border-input-border rounded-lg focus:ring-2 focus:ring-accent transition text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-text-muted mb-1">
+                          Kaç tane {settings.cancelRule.lowScore}'ı iptal eder
+                        </label>
+                        <input
+                          type="number"
+                          min="1"
+                          max="10"
+                          value={settings.cancelRule.lowCount}
+                          onChange={(e) => setSettings({
+                            ...settings,
+                            cancelRule: { ...settings.cancelRule, lowCount: Number(e.target.value) }
+                          })}
+                          className="w-full px-3 py-2 bg-background border border-input-border rounded-lg focus:ring-2 focus:ring-accent transition text-sm"
+                        />
+                      </div>
+                    </div>
+                    <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded text-xs">
+                      <strong>Örnek:</strong> {settings.cancelRule.highCount} tane {settings.cancelRule.highScore}, {settings.cancelRule.lowCount} tane {settings.cancelRule.lowScore}'ı iptal eder.
+                      <br />
+                      <span className="text-text-muted">
+                        [2, 2, 1, 0] → İptal → [1] (2'ler ve 0 kaldırıldı) → Ortalama: 1.0
+                      </span>
+                    </div>
                   </div>
-                </>
-              )}
+                )}
 
-              {/* Example Calculation */}
-              <div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
-                <h3 className="font-bold mb-2 text-blue-600 dark:text-blue-400">Örnek:</h3>
-                <p className="text-sm text-text-muted">
-                  {settings.calcType === 'neutral'
-                    ? `${settings.vetoFives} tane 5 puan, ${settings.vetoOnes} tane 1 puanı iptal eder. Örneğin: [5,5,1,3] → İptal → [3] → Ortalama: 3.0`
-                    : 'Normal ortalama: Tüm puanların aritmetik ortalaması. Örneğin: [5,5,1,3] → Ortalama: 3.5'}
-                </p>
+                {!settings.cancelRule.enabled && (
+                  <p className="text-xs text-text-muted">
+                    İptal kuralı kapalı. Puanlar birbirini iptal etmez.
+                  </p>
+                )}
+              </div>
+
+              {/* Live Example */}
+              <div className="p-4 bg-purple-500/10 border border-purple-500/30 rounded-lg">
+                <h3 className="font-bold mb-2 text-purple-600 dark:text-purple-400">Canlı Örnek:</h3>
+                <div className="text-sm space-y-2">
+                  <p>Puanlar: <code className="bg-black/20 px-2 py-1 rounded">[2, 2, 1, 1, 0, 0]</code></p>
+                  {settings.cancelRule.enabled && (
+                    <p className="text-text-muted">
+                      İptal sonrası: <code className="bg-black/20 px-2 py-1 rounded">
+                        [{Array(6 - settings.cancelRule.highCount - settings.cancelRule.lowCount).fill('1').join(', ')}]
+                      </code>
+                    </p>
+                  )}
+                  <p>
+                    Ortalama: <strong className="text-accent">
+                      {(() => {
+                        let scores = [2, 2, 1, 1, 0, 0];
+                        if (settings.cancelRule.enabled) {
+                          scores = scores.slice(settings.cancelRule.highCount + settings.cancelRule.lowCount);
+                        }
+                        const avg = scores.length > 0 ? scores.reduce((a,b)=>a+b,0)/scores.length : 0;
+                        const hasVeto = settings.vetoRule.enabled && scores.filter(s=>s===0).length >= settings.vetoRule.zeroCount;
+                        return hasVeto ? `${avg.toFixed(2)} ⚠ VETO` : avg.toFixed(2);
+                      })()}
+                    </strong>
+                  </p>
+                  <p>
+                    Sonuç: {(() => {
+                      let scores = [2, 2, 1, 1, 0, 0];
+                      if (settings.cancelRule.enabled) {
+                        scores = scores.slice(settings.cancelRule.highCount + settings.cancelRule.lowCount);
+                      }
+                      const avg = scores.length > 0 ? scores.reduce((a,b)=>a+b,0)/scores.length : 0;
+                      const hasVeto = settings.vetoRule.enabled && scores.filter(s=>s===0).length >= settings.vetoRule.zeroCount;
+                      if (hasVeto) return <span className="text-red-500 font-bold">Kazanım YOK (Veto)</span>;
+                      return avg >= settings.threshold
+                        ? <span className="text-emerald-500 font-bold">Kazanım VAR ✓</span>
+                        : <span className="text-red-500 font-bold">Kazanım YOK ✗</span>;
+                    })()}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
