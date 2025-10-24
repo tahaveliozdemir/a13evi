@@ -19,9 +19,14 @@ export default function EvaluatorSelectorModal({
 
   useEffect(() => {
     // Load from localStorage
-    const savedName = localStorage.getItem('evaluatorName');
-    if (savedName) {
-      setEvaluatorName(savedName);
+    try {
+      const savedName = localStorage.getItem('evaluatorName');
+      if (savedName) {
+        setEvaluatorName(savedName);
+      }
+    } catch (err) {
+      console.warn('Failed to read evaluator name from localStorage:', err);
+      // Continue with default name if localStorage fails
     }
   }, []);
 
@@ -34,7 +39,13 @@ export default function EvaluatorSelectorModal({
     }
 
     // Save to localStorage
-    localStorage.setItem('evaluatorName', trimmedName);
+    try {
+      localStorage.setItem('evaluatorName', trimmedName);
+    } catch (err) {
+      console.warn('Failed to save evaluator name to localStorage:', err);
+      // Continue anyway - the name will still be used for this evaluation
+    }
+
     onSubmit(trimmedName);
   };
 

@@ -324,6 +324,7 @@ export default function EvaluationPage() {
         isOpen={showAddChildModal}
         onClose={() => setShowAddChildModal(false)}
         onAdd={handleAddChild}
+        existingChildren={children.map(child => child.name)}
       />
 
       {/* Delete Child Modal */}

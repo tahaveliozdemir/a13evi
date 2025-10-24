@@ -4,9 +4,10 @@ interface AddChildModalProps {
   isOpen: boolean;
   onClose: () => void;
   onAdd: (name: string) => Promise<void>;
+  existingChildren: string[];
 }
 
-export default function AddChildModal({ isOpen, onClose, onAdd }: AddChildModalProps) {
+export default function AddChildModal({ isOpen, onClose, onAdd, existingChildren }: AddChildModalProps) {
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -24,6 +25,15 @@ export default function AddChildModal({ isOpen, onClose, onAdd }: AddChildModalP
 
     if (trimmedName.length < 2) {
       setError('İsim en az 2 karakter olmalı');
+      return;
+    }
+
+    // Check for duplicate names (case-insensitive)
+    const isDuplicate = existingChildren.some(
+      (existingName) => existingName.toLowerCase() === trimmedName.toLowerCase()
+    );
+    if (isDuplicate) {
+      setError('Bu isimde bir çocuk zaten mevcut');
       return;
     }
 

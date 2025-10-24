@@ -59,16 +59,22 @@ export function EvaluationProvider({ children: childrenProp }: { children: React
   // Load unsaved changes from localStorage when date is set
   useEffect(() => {
     if (selectedDate) {
-      const saved = localStorage.getItem(`unsaved_${selectedDate}`);
-      if (saved) {
-        try {
-          setUnsavedChanges(JSON.parse(saved));
-        } catch (error) {
-          console.error('Failed to parse unsaved changes:', error);
-          setUnsavedChanges({});
+      try {
+        const saved = localStorage.getItem(`unsaved_${selectedDate}`);
+        if (saved) {
+          try {
+            setUnsavedChanges(JSON.parse(saved));
+          } catch (error) {
+            console.error('Failed to parse unsaved changes:', error);
+            setUnsavedChanges({});
+          }
+        } else {
+          // Load existing scores for this date
+          loadExistingScores(selectedDate);
         }
-      } else {
-        // Load existing scores for this date
+      } catch (error) {
+        console.warn('Failed to read unsaved changes from localStorage:', error);
+        // Load existing scores as fallback
         loadExistingScores(selectedDate);
       }
     }
@@ -77,7 +83,12 @@ export function EvaluationProvider({ children: childrenProp }: { children: React
   // Save unsaved changes to localStorage whenever they change
   useEffect(() => {
     if (selectedDate && Object.keys(unsavedChanges).length > 0) {
-      localStorage.setItem(`unsaved_${selectedDate}`, JSON.stringify(unsavedChanges));
+      try {
+        localStorage.setItem(`unsaved_${selectedDate}`, JSON.stringify(unsavedChanges));
+      } catch (error) {
+        console.warn('Failed to save unsaved changes to localStorage:', error);
+        // Continue - changes are still in memory and can be saved to Firebase
+      }
     }
   }, [unsavedChanges, selectedDate]);
 
@@ -332,7 +343,13 @@ export function EvaluationProvider({ children: childrenProp }: { children: React
       // Update local state
       setChildren(updatedChildren);
       setUnsavedChanges({});
-      localStorage.removeItem(`unsaved_${selectedDate}`);
+
+      try {
+        localStorage.removeItem(`unsaved_${selectedDate}`);
+      } catch (error) {
+        console.warn('Failed to remove unsaved changes from localStorage:', error);
+        // Continue - changes are saved to Firebase, localStorage cleanup is not critical
+      }
 
       return { success: true };
     } catch (error) {
