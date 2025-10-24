@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useToast } from '../contexts/ToastContext';
 
 export type ConfirmationVariant = 'danger' | 'warning' | 'info' | 'success';
 
@@ -65,6 +66,7 @@ export default function ConfirmationModal({
   confirmLoadingText = 'İşleniyor...'
 }: ConfirmationModalProps) {
   const [loading, setLoading] = useState(false);
+  const { showToast } = useToast();
 
   if (!isOpen) return null;
 
@@ -76,7 +78,12 @@ export default function ConfirmationModal({
       await onConfirm();
       onClose();
     } catch (err) {
-      console.error(err);
+      console.error('Confirmation action failed:', err);
+      showToast(
+        err instanceof Error ? err.message : 'İşlem sırasında bir hata oluştu',
+        'error'
+      );
+      // Keep modal open so user can try again or cancel
     } finally {
       setLoading(false);
     }
