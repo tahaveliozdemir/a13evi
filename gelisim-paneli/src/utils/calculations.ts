@@ -1,90 +1,104 @@
 import type { Child, AppSettings, ChildStats } from '../types';
 
 /**
- * Calculate neutral average with veto rule
- * Orijinal mantık: calculateNeutralAverage()
+ * NEW SYSTEM: Calculate average with configurable veto and cancel rules
+ * For 0-1-2 scoring system
  */
-export function calculateNeutralAverage(
+export function calculateAverageWithRules(
   scores: number[],
   settings: AppSettings
 ): {
   average: number;
-  remainingOnes: number;
+  remainingZeros: number;
   totalScores: number;
+  vetoApplied: boolean;
 } | null {
   if (!scores || scores.length === 0) return null;
 
-  const allScores = [...scores];
-  let fives = allScores.filter(s => s === 5).length;
-  let ones = allScores.filter(s => s === 1).length;
+  let remainingScores = [...scores];
+  let vetoApplied = false;
 
-  // Apply veto rule: vetoFives amount of 5s cancel vetoOnes amount of 1s
-  const { vetoFives, vetoOnes } = settings;
-  while (fives >= vetoFives && ones >= vetoOnes) {
-    fives -= vetoFives;
-    ones -= vetoOnes;
+  // Apply cancel rule if enabled
+  if (settings.cancelRule?.enabled) {
+    const { highScore, highCount, lowScore, lowCount } = settings.cancelRule;
+
+    let highScoreCount = remainingScores.filter(s => s === highScore).length;
+    let lowScoreCount = remainingScores.filter(s => s === lowScore).length;
+
+    // Cancel lowScore values with highScore values
+    while (highScoreCount >= highCount && lowScoreCount >= lowCount) {
+      highScoreCount -= highCount;
+      lowScoreCount -= lowCount;
+    }
+
+    // Remove cancelled scores
+    const highToRemove = remainingScores.filter(s => s === highScore).length - highScoreCount;
+    const lowToRemove = remainingScores.filter(s => s === lowScore).length - lowScoreCount;
+
+    for (let i = 0; i < highToRemove; i++) {
+      const idx = remainingScores.indexOf(highScore);
+      if (idx !== -1) remainingScores.splice(idx, 1);
+    }
+    for (let i = 0; i < lowToRemove; i++) {
+      const idx = remainingScores.indexOf(lowScore);
+      if (idx !== -1) remainingScores.splice(idx, 1);
+    }
   }
 
-  // Remove cancelled scores
-  let remainingScores = [...allScores];
-  const fivesToRemove = allScores.filter(s => s === 5).length - fives;
-  const onesToRemove = allScores.filter(s => s === 1).length - ones;
-
-  for (let i = 0; i < fivesToRemove; i++) {
-    const idx = remainingScores.indexOf(5);
-    if (idx !== -1) remainingScores.splice(idx, 1);
-  }
-  for (let i = 0; i < onesToRemove; i++) {
-    const idx = remainingScores.indexOf(1);
-    if (idx !== -1) remainingScores.splice(idx, 1);
+  // Check veto rule if enabled
+  const remainingZeros = remainingScores.filter(s => s === 0).length;
+  if (settings.vetoRule?.enabled && remainingZeros >= settings.vetoRule.zeroCount) {
+    vetoApplied = true;
+    return {
+      average: 0,
+      remainingZeros,
+      totalScores: remainingScores.length,
+      vetoApplied
+    };
   }
 
-  // Check remaining ones
-  const remainingOnes = remainingScores.filter(s => s === 1).length;
-
+  // Calculate average
   if (remainingScores.length === 0) return null;
 
   const avg = remainingScores.reduce((a, b) => a + b, 0) / remainingScores.length;
 
   return {
     average: avg,
-    remainingOnes: remainingOnes,
-    totalScores: remainingScores.length
+    remainingZeros,
+    totalScores: remainingScores.length,
+    vetoApplied
   };
 }
 
 /**
- * Calculate normal average
- * Orijinal mantık: calculateNormalAverage()
+ * Get color class for average score (0-2 system)
  */
-export function calculateNormalAverage(scores: number[]): number | null {
-  if (!scores || scores.length === 0) return null;
-  return scores.reduce((a, b) => a + b, 0) / scores.length;
-}
-
-/**
- * Get color class for average score
- * Orijinal mantık: getAverageColor()
- */
-export function getAverageColor(avg: number | null): string {
+export function getAverageColor(avg: number | null, settings?: AppSettings): string {
   if (avg === null) return 'text-text-muted';
-  if (avg >= 4.5) return 'text-emerald-500';
-  if (avg >= 3.75) return 'text-lime-500';
-  if (avg >= 3.25) return 'text-yellow-500';
-  if (avg >= 2.5) return 'text-orange-500';
-  return 'text-red-500';
+
+  const threshold = settings?.threshold ?? 1.5;
+  const maxScore = settings?.scoreSystem?.max ?? 2;
+
+  // Renk skalası: 0-2 sistemi için
+  if (avg >= threshold) return 'text-emerald-500'; // Başarılı (≥1.5)
+  if (avg >= threshold * 0.66) return 'text-yellow-500'; // Orta (≥1.0)
+  return 'text-red-500'; // Yetersiz (<1.0)
 }
 
 /**
- * Calculate child statistics
- * Orijinal mantık: calculateChildStats()
+ * Calculate child statistics with new system
  */
 export function calculateChildStats(child: Child, settings: AppSettings): ChildStats {
   if (!child.scores || child.scores.length === 0) {
     return {
+      average: null,
+      remainingZeros: 0,
+      totalScores: 0,
+      vetoApplied: false,
+      periods: settings.periods.map(() => null),
+      // Backward compatibility
       normalAvg: null,
-      neutralAvg: null,
-      periods: settings.periods.map(() => null)
+      neutralAvg: null
     };
   }
 
@@ -100,8 +114,8 @@ export function calculateChildStats(child: Child, settings: AppSettings): ChildS
     return values;
   });
 
-  const normalAvg = calculateNormalAverage(allScoreValues);
-  const neutralResult = calculateNeutralAverage(allScoreValues, settings);
+  // Calculate overall average with rules
+  const overallResult = calculateAverageWithRules(allScoreValues, settings);
 
   // Calculate period stats
   const uniqueDates = [...new Set(child.scores.map(s => s.date))].sort(
@@ -125,39 +139,35 @@ export function calculateChildStats(child: Child, settings: AppSettings): ChildS
 
     if (periodScores.length === 0) return null;
 
-    const calcType = settings.calcType;
-    let result;
-    let achieved = false;
+    const result = calculateAverageWithRules(periodScores, settings);
 
-    if (calcType === 'neutral') {
-      result = calculateNeutralAverage(periodScores, settings);
-      if (result) {
-        // Check cancel threshold
-        if (settings.cancelThreshold > 0 && result.remainingOnes >= settings.cancelThreshold) {
-          achieved = false;
-        } else if (result.average >= settings.threshold) {
-          achieved = true;
-        }
-      }
-    } else {
-      const avg = calculateNormalAverage(periodScores);
-      result = avg !== null ? { average: avg, remainingOnes: 0, totalScores: periodScores.length } : null;
-      if (avg !== null && avg >= settings.threshold) {
-        achieved = true;
-      }
-    }
+    if (!result) return null;
 
-    return result ? {
-      ...result,
+    // Check if achieved (average >= threshold and not vetoed)
+    const achieved = !result.vetoApplied && result.average >= settings.threshold;
+
+    return {
+      average: result.average,
+      remainingZeros: result.remainingZeros,
       achieved,
-      daysCount: relevantDates.length
-    } : null;
+      daysCount: relevantDates.length,
+      vetoApplied: result.vetoApplied
+    };
   });
 
   return {
-    normalAvg,
-    neutralAvg: neutralResult,
-    periods: periodStats
+    average: overallResult?.average ?? null,
+    remainingZeros: overallResult?.remainingZeros ?? 0,
+    totalScores: overallResult?.totalScores ?? 0,
+    vetoApplied: overallResult?.vetoApplied ?? false,
+    periods: periodStats,
+    // Backward compatibility - map to old structure
+    normalAvg: overallResult?.average ?? null,
+    neutralAvg: overallResult ? {
+      average: overallResult.average,
+      remainingOnes: overallResult.remainingZeros, // Map zeros to ones for backward compat
+      totalScores: overallResult.totalScores
+    } : null
   };
 }
 
@@ -171,4 +181,39 @@ export function formatDate(dateStr: string): string {
     month: 'long',
     day: 'numeric'
   });
+}
+
+// ============================================
+// DEPRECATED: Old system functions
+// Kept for backward compatibility
+// ============================================
+
+/**
+ * @deprecated Use calculateAverageWithRules instead
+ */
+export function calculateNeutralAverage(
+  scores: number[],
+  settings: AppSettings
+): {
+  average: number;
+  remainingOnes: number;
+  totalScores: number;
+} | null {
+  // Fallback to new system
+  const result = calculateAverageWithRules(scores, settings);
+  if (!result) return null;
+
+  return {
+    average: result.average,
+    remainingOnes: result.remainingZeros,
+    totalScores: result.totalScores
+  };
+}
+
+/**
+ * @deprecated Use calculateAverageWithRules with rules disabled instead
+ */
+export function calculateNormalAverage(scores: number[]): number | null {
+  if (!scores || scores.length === 0) return null;
+  return scores.reduce((a, b) => a + b, 0) / scores.length;
 }

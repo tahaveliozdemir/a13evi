@@ -23,14 +23,34 @@ export interface Period {
   name: string;
 }
 
+export interface VetoRule {
+  enabled: boolean;
+  zeroCount: number; // X tane 0 varsa ödül alamaz
+}
+
+export interface CancelRule {
+  enabled: boolean;
+  highScore: number; // İptal eden yüksek puan (varsayılan: 2)
+  highCount: number; // Kaç tane yüksek puan gerekli
+  lowScore: number; // İptal edilen düşük puan (varsayılan: 0)
+  lowCount: number; // Kaç tane düşük puan iptal edilir
+}
+
 export interface AppSettings {
   categories: string[];
-  threshold: number;
-  calcType: 'neutral' | 'normal';
-  vetoFives: number;
-  vetoOnes: number;
-  cancelThreshold: number;
+  threshold: number; // Kazanım eşiği (0.0 - 2.0 arası, varsayılan: 1.5)
+  scoreSystem: {
+    min: number; // Minimum puan (varsayılan: 0)
+    max: number; // Maximum puan (varsayılan: 2)
+  };
+  vetoRule: VetoRule;
+  cancelRule: CancelRule;
   periods: Period[];
+  // Eski alanlar - geriye dönük uyumluluk için
+  calcType?: 'neutral' | 'normal';
+  vetoFives?: number;
+  vetoOnes?: number;
+  cancelThreshold?: number;
 }
 
 // User & Auth
@@ -50,18 +70,24 @@ export interface AuthUser {
 
 // Statistics
 export interface ChildStats {
-  normalAvg: number | null;
-  neutralAvg: {
+  average: number | null; // Genel ortalama
+  remainingZeros: number; // Kalan 0'lar (veto/iptal sonrası)
+  totalScores: number; // Toplam puan sayısı
+  vetoApplied: boolean; // Veto kuralı uygulandı mı
+  periods: Array<{
+    average: number;
+    remainingZeros: number;
+    achieved: boolean;
+    daysCount: number;
+    vetoApplied: boolean;
+  } | null>;
+  // Eski alanlar - geriye dönük uyumluluk için
+  normalAvg?: number | null;
+  neutralAvg?: {
     average: number;
     remainingOnes: number;
     totalScores: number;
   } | null;
-  periods: Array<{
-    average: number;
-    remainingOnes: number;
-    achieved: boolean;
-    daysCount: number;
-  } | null>;
 }
 
 // UI State

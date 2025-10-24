@@ -13,11 +13,9 @@ interface ChildCardProps {
 }
 
 const SCORE_COLORS = {
-  5: '#059669', // emerald-600
-  4: '#65a30d', // lime-600
-  3: '#eab308', // yellow-500
-  2: '#f97316', // orange-500
-  1: '#dc2626'  // red-600
+  2: '#059669', // emerald-600 (Başarılı)
+  1: '#eab308', // yellow-500 (Orta)
+  0: '#dc2626'  // red-600 (Yetersiz)
 };
 
 export default function ChildCard({
@@ -41,15 +39,13 @@ export default function ChildCard({
           <h3 className="font-bold text-lg">{child.name}</h3>
           <div className="text-xs text-text-muted mt-1 space-x-3">
             <span>
-              Normal Ort: <strong className={getAverageColor(stats.normalAvg)}>
-                {stats.normalAvg !== null ? stats.normalAvg.toFixed(2) : '-'}
+              Ortalama: <strong className={getAverageColor(stats.average ?? null, settings)}>
+                {stats.average !== null && stats.average !== undefined ? stats.average.toFixed(2) : '-'}
               </strong>
             </span>
-            <span>
-              Nötr Ort: <strong className={getAverageColor(stats.neutralAvg?.average || null)}>
-                {stats.neutralAvg && stats.neutralAvg.average !== null ? stats.neutralAvg.average.toFixed(2) : '-'}
-              </strong>
-            </span>
+            {stats.vetoApplied && (
+              <span className="text-red-500 font-semibold">⚠ Veto</span>
+            )}
           </div>
         </div>
 
@@ -101,11 +97,12 @@ export default function ChildCard({
                 </div>
               </div>
 
-              {/* Score Buttons */}
+              {/* Score Buttons - NEW 0-1-2 SYSTEM */}
               <div className="flex gap-2">
-                {[5, 4, 3, 2, 1].map(score => {
+                {[2, 1, 0].map(score => {
                   const isSelected = selectedScore === score;
                   const color = SCORE_COLORS[score as keyof typeof SCORE_COLORS];
+                  const labels = { 2: 'Başarılı', 1: 'Orta', 0: 'Yetersiz' };
 
                   return (
                     <button
@@ -113,8 +110,8 @@ export default function ChildCard({
                       onClick={() => onScoreClick(catIndex, score)}
                       disabled={unsavedChanges?.absent}
                       className={`
-                        flex-1 py-2 rounded-lg font-bold transition-all
-                        border-2
+                        flex-1 py-3 rounded-lg font-bold transition-all
+                        border-2 flex flex-col items-center gap-1
                         ${isSelected
                           ? 'text-white transform scale-105 shadow-lg'
                           : 'text-foreground hover:bg-input-bg border-input-border'
@@ -125,8 +122,10 @@ export default function ChildCard({
                         backgroundColor: color,
                         borderColor: color
                       } : {}}
+                      title={labels[score as keyof typeof labels]}
                     >
-                      {score}
+                      <span className="text-2xl">{score}</span>
+                      <span className="text-[10px] opacity-75">{labels[score as keyof typeof labels]}</span>
                     </button>
                   );
                 })}
