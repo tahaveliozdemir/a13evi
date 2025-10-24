@@ -2,16 +2,23 @@ import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
-// Firebase Configuration
+// Firebase Configuration from Environment Variables
 const firebaseConfig = {
-  apiKey: "AIzaSyB3ghCRUQ5Jk4n6VSnlSp1AYTqubCFvX5g",
-  authDomain: "yoklamalistesi-da9eb.firebaseapp.com",
-  projectId: "yoklamalistesi-da9eb",
-  storageBucket: "yoklamalistesi-da9eb.appspot.com",
-  messagingSenderId: "926689591561",
-  appId: "1:926689591561:web:9754db1ce0645ceaa753d8",
-  measurementId: "G-5YDR46VPJX"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
+
+// Validate configuration
+if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
+  throw new Error(
+    'Firebase configuration is missing. Please check your .env file and ensure all VITE_FIREBASE_* variables are set.'
+  );
+}
 
 // Initialize Firebase
 export const app = initializeApp(firebaseConfig);

@@ -4,6 +4,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { getSettings, updateSettings } from '../services/settingsService';
 import LoadingSpinner from '../components/LoadingSpinner';
+import InputModal from '../components/InputModal';
+import ConfirmationModal from '../components/ConfirmationModal';
 import type { AppSettings } from '../types';
 
 export default function SettingsPage() {
@@ -14,6 +16,35 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<'categories' | 'rules' | 'periods'>('categories');
+
+  // Modal states
+  const [categoryModal, setCategoryModal] = useState<{
+    isOpen: boolean;
+    mode: 'add' | 'edit';
+    index?: number;
+    initialValue?: string;
+  }>({ isOpen: false, mode: 'add' });
+
+  const [periodDaysModal, setPeriodDaysModal] = useState<{
+    isOpen: boolean;
+    mode: 'add' | 'edit';
+    index?: number;
+    initialDays?: number;
+  }>({ isOpen: false, mode: 'add' });
+
+  const [periodNameModal, setPeriodNameModal] = useState<{
+    isOpen: boolean;
+    days: number;
+    index?: number;
+    initialName?: string;
+  }>({ isOpen: false, days: 0 });
+
+  const [deleteModal, setDeleteModal] = useState<{
+    isOpen: boolean;
+    type: 'category' | 'period';
+    index: number;
+    name: string;
+  }>({ isOpen: false, type: 'category', index: 0, name: '' });
 
   // Redirect if not admin
   useEffect(() => {
@@ -52,43 +83,40 @@ export default function SettingsPage() {
   };
 
   // Category Management
-  const addCategory = () => {
+  const handleCategorySubmit = (value: string) => {
     if (!settings) return;
-    const newCategory = prompt('Yeni kategori adı:');
-    if (newCategory && newCategory.trim()) {
+
+    if (categoryModal.mode === 'add') {
       setSettings({
         ...settings,
-        categories: [...settings.categories, newCategory.trim()]
+        categories: [...settings.categories, value]
       });
-    }
-  };
-
-  const editCategory = (index: number) => {
-    if (!settings) return;
-    const newName = prompt('Kategori adını düzenle:', settings.categories[index]);
-    if (newName && newName.trim()) {
+      showToast('Kategori eklendi!', 'success');
+    } else if (categoryModal.index !== undefined) {
       const newCategories = [...settings.categories];
-      newCategories[index] = newName.trim();
+      newCategories[categoryModal.index] = value;
       setSettings({
         ...settings,
         categories: newCategories
       });
+      showToast('Kategori güncellendi!', 'success');
     }
   };
 
-  const deleteCategory = (index: number) => {
-    if (!settings) return;
+  const handleDeleteCategory = () => {
+    if (!settings || deleteModal.type !== 'category') return;
+
     if (settings.categories.length <= 1) {
       showToast('En az bir kategori olmalı!', 'warning');
       return;
     }
-    if (confirm(`"${settings.categories[index]}" kategorisini silmek istediğinizden emin misiniz?`)) {
-      const newCategories = settings.categories.filter((_, i) => i !== index);
-      setSettings({
-        ...settings,
-        categories: newCategories
-      });
-    }
+
+    const newCategories = settings.categories.filter((_, i) => i !== deleteModal.index);
+    setSettings({
+      ...settings,
+      categories: newCategories
+    });
+    showToast('Kategori silindi!', 'success');
   };
 
   const moveCategoryUp = (index: number) => {
@@ -112,44 +140,59 @@ export default function SettingsPage() {
   };
 
   // Period Management
-  const addPeriod = () => {
-    if (!settings) return;
-    const days = prompt('Kaç günlük periyot?');
-    if (!days || isNaN(Number(days))) return;
-    const name = prompt('Periyot adı:', `${days} Günlük Kazanım`);
-    if (name && name.trim()) {
-      setSettings({
-        ...settings,
-        periods: [...settings.periods, { days: Number(days), name: name.trim() }]
+  const handlePeriodDaysSubmit = (value: string) => {
+    const days = parseInt(value, 10);
+
+    if (periodDaysModal.mode === 'add') {
+      // Open name modal with the days
+      setPeriodNameModal({
+        isOpen: true,
+        days,
+        initialName: `${days} Günlük Kazanım`
+      });
+    } else if (periodDaysModal.index !== undefined) {
+      // For edit, open name modal with existing period name
+      const period = settings?.periods[periodDaysModal.index];
+      setPeriodNameModal({
+        isOpen: true,
+        days,
+        index: periodDaysModal.index,
+        initialName: period?.name
       });
     }
   };
 
-  const editPeriod = (index: number) => {
+  const handlePeriodNameSubmit = (name: string) => {
     if (!settings) return;
-    const period = settings.periods[index];
-    const days = prompt('Kaç günlük periyot?', String(period.days));
-    if (!days || isNaN(Number(days))) return;
-    const name = prompt('Periyot adı:', period.name);
-    if (name && name.trim()) {
+
+    if (periodNameModal.index !== undefined) {
+      // Edit mode
       const newPeriods = [...settings.periods];
-      newPeriods[index] = { days: Number(days), name: name.trim() };
+      newPeriods[periodNameModal.index] = { days: periodNameModal.days, name };
       setSettings({
         ...settings,
         periods: newPeriods
       });
+      showToast('Periyot güncellendi!', 'success');
+    } else {
+      // Add mode
+      setSettings({
+        ...settings,
+        periods: [...settings.periods, { days: periodNameModal.days, name }]
+      });
+      showToast('Periyot eklendi!', 'success');
     }
   };
 
-  const deletePeriod = (index: number) => {
-    if (!settings) return;
-    if (confirm(`"${settings.periods[index].name}" periyodunu silmek istediğinizden emin misiniz?`)) {
-      const newPeriods = settings.periods.filter((_, i) => i !== index);
-      setSettings({
-        ...settings,
-        periods: newPeriods
-      });
-    }
+  const handleDeletePeriod = () => {
+    if (!settings || deleteModal.type !== 'period') return;
+
+    const newPeriods = settings.periods.filter((_, i) => i !== deleteModal.index);
+    setSettings({
+      ...settings,
+      periods: newPeriods
+    });
+    showToast('Periyot silindi!', 'success');
   };
 
   if (loading) {
@@ -219,7 +262,7 @@ export default function SettingsPage() {
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold">Değerlendirme Kategorileri</h2>
               <button
-                onClick={addCategory}
+                onClick={() => setCategoryModal({ isOpen: true, mode: 'add' })}
                 className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg font-medium transition flex items-center gap-2"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
@@ -265,13 +308,13 @@ export default function SettingsPage() {
                   </div>
 
                   <button
-                    onClick={() => editCategory(index)}
+                    onClick={() => setCategoryModal({ isOpen: true, mode: 'edit', index, initialValue: category })}
                     className="bg-blue-500/20 hover:bg-blue-500/30 text-blue-600 dark:text-blue-400 px-3 py-1.5 rounded-lg font-medium transition"
                   >
                     Düzenle
                   </button>
                   <button
-                    onClick={() => deleteCategory(index)}
+                    onClick={() => setDeleteModal({ isOpen: true, type: 'category', index, name: category })}
                     className="bg-red-500/20 hover:bg-red-500/30 text-red-600 dark:text-red-400 px-3 py-1.5 rounded-lg font-medium transition"
                   >
                     Sil
@@ -387,7 +430,7 @@ export default function SettingsPage() {
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold">Kazanım Periyotları</h2>
               <button
-                onClick={addPeriod}
+                onClick={() => setPeriodDaysModal({ isOpen: true, mode: 'add' })}
                 className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg font-medium transition flex items-center gap-2"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
@@ -410,13 +453,13 @@ export default function SettingsPage() {
                   </div>
 
                   <button
-                    onClick={() => editPeriod(index)}
+                    onClick={() => setPeriodDaysModal({ isOpen: true, mode: 'edit', index, initialDays: period.days })}
                     className="bg-blue-500/20 hover:bg-blue-500/30 text-blue-600 dark:text-blue-400 px-3 py-1.5 rounded-lg font-medium transition"
                   >
                     Düzenle
                   </button>
                   <button
-                    onClick={() => deletePeriod(index)}
+                    onClick={() => setDeleteModal({ isOpen: true, type: 'period', index, name: period.name })}
                     className="bg-red-500/20 hover:bg-red-500/30 text-red-600 dark:text-red-400 px-3 py-1.5 rounded-lg font-medium transition"
                   >
                     Sil
@@ -456,6 +499,65 @@ export default function SettingsPage() {
             )}
           </button>
         </div>
+
+        {/* Modals */}
+        <InputModal
+          isOpen={categoryModal.isOpen}
+          onClose={() => setCategoryModal({ isOpen: false, mode: 'add' })}
+          onConfirm={handleCategorySubmit}
+          title={categoryModal.mode === 'add' ? 'Yeni Kategori Ekle' : 'Kategori Düzenle'}
+          placeholder="Kategori adı"
+          initialValue={categoryModal.initialValue}
+          validate={(value) => {
+            if (settings?.categories.includes(value) &&
+                (categoryModal.mode === 'add' ||
+                 (categoryModal.index !== undefined && settings.categories[categoryModal.index] !== value))) {
+              return 'Bu kategori zaten mevcut';
+            }
+            if (value.length < 2) {
+              return 'Kategori adı en az 2 karakter olmalı';
+            }
+            return null;
+          }}
+          maxLength={50}
+        />
+
+        <InputModal
+          isOpen={periodDaysModal.isOpen}
+          onClose={() => setPeriodDaysModal({ isOpen: false, mode: 'add' })}
+          onConfirm={handlePeriodDaysSubmit}
+          title="Periyot Gün Sayısı"
+          placeholder="Örn: 30"
+          initialValue={periodDaysModal.initialDays?.toString()}
+          type="number"
+          validate={(value) => {
+            const days = parseInt(value, 10);
+            if (isNaN(days) || days < 1 || days > 365) {
+              return 'Lütfen 1-365 arasında bir gün sayısı girin';
+            }
+            return null;
+          }}
+        />
+
+        <InputModal
+          isOpen={periodNameModal.isOpen}
+          onClose={() => setPeriodNameModal({ isOpen: false, days: 0 })}
+          onConfirm={handlePeriodNameSubmit}
+          title="Periyot Adı"
+          placeholder="Örn: 30 Günlük Kazanım"
+          initialValue={periodNameModal.initialName}
+          maxLength={50}
+        />
+
+        <ConfirmationModal
+          isOpen={deleteModal.isOpen}
+          onClose={() => setDeleteModal({ isOpen: false, type: 'category', index: 0, name: '' })}
+          onConfirm={deleteModal.type === 'category' ? handleDeleteCategory : handleDeletePeriod}
+          title={deleteModal.type === 'category' ? 'Kategori Sil' : 'Periyot Sil'}
+          message={`"${deleteModal.name}" ${deleteModal.type === 'category' ? 'kategorisini' : 'periyodunu'} silmek istediğinizden emin misiniz?`}
+          variant="danger"
+          confirmText="Evet, Sil"
+        />
       </div>
     </div>
   );
