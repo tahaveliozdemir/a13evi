@@ -98,7 +98,7 @@ export default function ChildCardV2({
 
   // Check achievement status
   const achievementStatus = stats.periods.map((period, idx) => ({
-    name: settings.periods[idx].name,
+    name: settings.periods[idx]?.name || `Periyot ${idx + 1}`,
     achieved: period?.achieved || false,
     days: period?.daysCount || 0
   }));
