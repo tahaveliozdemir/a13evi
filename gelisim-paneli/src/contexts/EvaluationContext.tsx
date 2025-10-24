@@ -1,7 +1,8 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import { getChildren, saveChildren } from '../services/childrenService';
-import { getSettings } from '../services/settingsService';
+import { getSettings, saveSettings } from '../services/settingsService';
 import type { Child, AppSettings, UnsavedChanges } from '../types';
+import { needsMigration, migrateChildren, migrateSettings } from '../utils/migration';
 
 interface EvaluationContextType {
   // State
@@ -36,17 +37,65 @@ export function EvaluationProvider({ children: childrenProp }: { children: React
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  // Load children and settings on mount
+  // Load children and settings on mount (with auto-migration)
   useEffect(() => {
     async function loadData() {
       setLoading(true);
       try {
-        const [childrenData, settingsData] = await Promise.all([
+        let [childrenData, settingsData] = await Promise.all([
           getChildren(),
           getSettings()
         ]);
+
+        // Auto-migrate if needed
+        let migrated = false;
+
+        if (needsMigration(settingsData)) {
+          console.log('[Migration] Detected old scoring system (1-5), migrating to new system (0-1-2)...');
+
+          // Migrate settings
+          settingsData = migrateSettings(settingsData);
+          console.log('[Migration] Settings migrated:', settingsData);
+
+          // Migrate children scores
+          childrenData = migrateChildren(childrenData);
+          console.log(`[Migration] Migrated ${childrenData.length} children`);
+
+          migrated = true;
+
+          // Save migrated data
+          await Promise.all([
+            saveSettings(settingsData),
+            saveChildren(childrenData)
+          ]);
+
+          console.log('[Migration] ✅ Migration completed and saved to Firebase!');
+          console.log('[Migration] Old system: 1-2→0, 3→1, 4-5→2');
+        } else {
+          console.log('[Migration] No migration needed - already using new system (0-1-2)');
+        }
+
         setChildren(childrenData);
         setSettings(settingsData);
+
+        if (migrated) {
+          // Show migration success message
+          setTimeout(() => {
+            if (window.confirm(
+              '✅ Sistem başarıyla güncellendi!\n\n' +
+              'Puanlama sistemi 1-5\'ten 0-1-2\'ye dönüştürüldü:\n' +
+              '• 1-2 puan → 0 (Yetersiz)\n' +
+              '• 3 puan → 1 (Orta)\n' +
+              '• 4-5 puan → 2 (Başarılı)\n\n' +
+              'Tüm eski verileriniz otomatik olarak yeni sisteme aktarıldı.\n' +
+              'Ayarlar sayfasından yeni kuralları yapılandırabilirsiniz.\n\n' +
+              'Devam etmek için Tamam\'a tıklayın.'
+            )) {
+              // Reload page to ensure all components use new data
+              window.location.reload();
+            }
+          }, 1000);
+        }
       } catch (error) {
         console.error('Failed to load data:', error);
       } finally {
