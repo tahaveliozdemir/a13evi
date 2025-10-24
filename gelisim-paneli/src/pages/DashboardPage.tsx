@@ -56,11 +56,11 @@ export default function DashboardPage() {
   if (settings && children.length > 0) {
     // Calculate average score across all children
     const childrenStats = children.map(child => calculateChildStats(child, settings));
-    const totalAvg = childrenStats.reduce((sum, s) => sum + (s.neutralAvg?.average || 0), 0);
+    const totalAvg = childrenStats.reduce((sum, s) => sum + (s.average ?? 0), 0);
     stats.averageScore = childrenStats.length > 0 ? totalAvg / childrenStats.length : 0;
 
     // Calculate success rate (above threshold)
-    const successfulChildren = childrenStats.filter(s => (s.neutralAvg?.average || 0) >= settings.threshold);
+    const successfulChildren = childrenStats.filter(s => (s.average ?? 0) >= settings.threshold);
     stats.successRate = childrenStats.length > 0 ? (successfulChildren.length / childrenStats.length) * 100 : 0;
 
     // Get recent evaluations (last 7 days)
@@ -77,7 +77,7 @@ export default function DashboardPage() {
               childName: child.name,
               date: score.date,
               evaluator: score.evaluator,
-              avg: childStats.neutralAvg?.average || 0
+              avg: childStats.average ?? 0
             });
           }
         });
@@ -94,8 +94,8 @@ export default function DashboardPage() {
   if (settings && children.length > 0) {
     children.forEach(child => {
       const childStats = calculateChildStats(child, settings);
-      if (childStats.neutralAvg !== null) {
-        topPerformers.push({ child, avg: childStats.neutralAvg.average });
+      if (childStats.average !== null && childStats.average !== undefined) {
+        topPerformers.push({ child, avg: childStats.average });
       }
     });
     topPerformers.sort((a, b) => b.avg - a.avg);

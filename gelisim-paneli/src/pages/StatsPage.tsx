@@ -72,8 +72,8 @@ export default function StatsPage() {
     if (performanceFilter !== 'all') {
       filtered = filtered.filter(child => {
         const stats = calculateChildStats(child, settings);
-        if (stats.neutralAvg === null) return false;
-        const isAboveThreshold = stats.neutralAvg.average >= settings.threshold;
+        if (stats.average === null || stats.average === undefined) return false;
+        const isAboveThreshold = stats.average >= settings.threshold;
         return performanceFilter === 'above' ? isAboveThreshold : !isAboveThreshold;
       });
     }
@@ -141,9 +141,9 @@ export default function StatsPage() {
               dateMap.set(dateKey, { totalScore: 0, count: 0 });
             }
             const stats = calculateChildStats(child, settings);
-            if (stats.neutralAvg !== null) {
+            if (stats.average !== null && stats.average !== undefined) {
               const entry = dateMap.get(dateKey)!;
-              entry.totalScore += stats.neutralAvg.average;
+              entry.totalScore += stats.average;
               entry.count += 1;
             }
           }
@@ -214,8 +214,8 @@ export default function StatsPage() {
 
     targetChildren.forEach(child => {
       const stats = calculateChildStats(child, settings);
-      if (stats.neutralAvg !== null) {
-        const avg = stats.neutralAvg.average;
+      if (stats.average !== null && stats.average !== undefined) {
+        const avg = stats.average;
         const range = ranges.find(r => avg >= r.min && avg < r.max);
         if (range) range.count++;
       }
@@ -564,7 +564,7 @@ export default function StatsPage() {
                         : children.filter(c => c.id === selectedChild);
                       if (!settings || targetChildren.length === 0) return '0.00';
                       const childrenStats = targetChildren.map(child => calculateChildStats(child, settings));
-                      const totalAvg = childrenStats.reduce((sum, s) => sum + (s.neutralAvg?.average || 0), 0);
+                      const totalAvg = childrenStats.reduce((sum, s) => sum + (s.average ?? 0), 0);
                       return (childrenStats.length > 0 ? totalAvg / childrenStats.length : 0).toFixed(2);
                     })()}
                   </div>

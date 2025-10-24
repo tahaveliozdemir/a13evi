@@ -77,7 +77,6 @@ export function getAverageColor(avg: number | null, settings?: AppSettings): str
   if (avg === null) return 'text-text-muted';
 
   const threshold = settings?.threshold ?? 1.5;
-  const maxScore = settings?.scoreSystem?.max ?? 2;
 
   // Renk skalası: 0-2 sistemi için
   if (avg >= threshold) return 'text-emerald-500'; // Başarılı (≥1.5)

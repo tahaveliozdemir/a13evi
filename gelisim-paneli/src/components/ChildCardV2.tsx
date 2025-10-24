@@ -20,11 +20,9 @@ interface ChildCardV2Props {
 }
 
 const SCORE_COLORS = {
-  5: { bg: '#059669', text: 'text-emerald-600' },
-  4: { bg: '#65a30d', text: 'text-lime-600' },
-  3: { bg: '#eab308', text: 'text-yellow-600' },
-  2: { bg: '#f97316', text: 'text-orange-600' },
-  1: { bg: '#dc2626', text: 'text-red-600' }
+  2: { bg: '#059669', text: 'text-emerald-600' }, // Başarılı
+  1: { bg: '#eab308', text: 'text-yellow-600' }, // Orta
+  0: { bg: '#dc2626', text: 'text-red-600' }  // Yetersiz
 };
 
 export default function ChildCardV2({
@@ -141,15 +139,13 @@ export default function ChildCardV2({
             {/* Stats Row */}
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-text-muted">
               <span>
-                Normal: <strong className={getAverageColor(stats.normalAvg)}>
-                  {stats.normalAvg !== null ? stats.normalAvg.toFixed(2) : '-'}
+                Ortalama: <strong className={getAverageColor(stats.average ?? null, settings)}>
+                  {stats.average !== null && stats.average !== undefined ? stats.average.toFixed(2) : '-'}
                 </strong>
               </span>
-              <span>
-                Nötr: <strong className={getAverageColor(stats.neutralAvg?.average || null)}>
-                  {stats.neutralAvg && stats.neutralAvg.average !== null ? stats.neutralAvg.average.toFixed(2) : '-'}
-                </strong>
-              </span>
+              {stats.vetoApplied && (
+                <span className="text-red-500 font-semibold">⚠ Veto</span>
+              )}
               {lastEvalDate && (
                 <span className="text-text-muted">
                   Son: {lastEvalDate}
@@ -244,19 +240,23 @@ export default function ChildCardV2({
           <div className="mt-3 p-3 bg-input-bg rounded-lg border border-input-border space-y-2 animate-scaleIn">
             <p className="text-xs font-medium text-text-muted mb-2">Hızlı Doldur:</p>
             <div className="flex gap-2">
-              {[5, 4, 3, 2, 1].map(score => (
-                <button
-                  key={score}
-                  onClick={() => onQuickFill?.(score)}
-                  className="flex-1 py-3 md:py-2 rounded-lg font-bold text-sm transition-all hover:scale-105"
-                  style={{
-                    backgroundColor: SCORE_COLORS[score as keyof typeof SCORE_COLORS].bg,
-                    color: 'white'
-                  }}
-                >
-                  Hepsi {score}
-                </button>
-              ))}
+              {[2, 1, 0].map(score => {
+                const labels = { 2: 'Başarılı', 1: 'Orta', 0: 'Yetersiz' };
+                return (
+                  <button
+                    key={score}
+                    onClick={() => onQuickFill?.(score)}
+                    className="flex-1 py-3 md:py-2 rounded-lg font-bold text-sm transition-all hover:scale-105"
+                    style={{
+                      backgroundColor: SCORE_COLORS[score as keyof typeof SCORE_COLORS].bg,
+                      color: 'white'
+                    }}
+                    title={`Tüm kategorileri ${labels[score as keyof typeof labels]} olarak işaretle`}
+                  >
+                    {score} - {labels[score as keyof typeof labels]}
+                  </button>
+                );
+              })}
             </div>
             {onCopyLast && child.scores && child.scores.length > 0 && (
               <button
@@ -319,11 +319,12 @@ export default function ChildCardV2({
                   </div>
                 )}
 
-                {/* Score Buttons */}
+                {/* Score Buttons - 0-1-2 System */}
                 <div className="flex gap-2">
-                  {[5, 4, 3, 2, 1].map(score => {
+                  {[2, 1, 0].map(score => {
                     const isSelected = selectedScore === score;
                     const color = SCORE_COLORS[score as keyof typeof SCORE_COLORS].bg;
+                    const labels = { 2: 'Başarılı', 1: 'Orta', 0: 'Yetersiz' };
 
                     return (
                       <button
@@ -332,7 +333,7 @@ export default function ChildCardV2({
                         disabled={isAbsent}
                         className={`
                           flex-1 py-3 md:py-2.5 rounded-lg font-bold transition-all
-                          border-2 relative overflow-hidden
+                          border-2 relative overflow-hidden flex flex-col items-center gap-0.5
                           ${isSelected
                             ? 'text-white transform scale-110 shadow-lg z-10'
                             : 'text-foreground hover:bg-input-bg border-input-border hover:border-accent/50'
@@ -343,8 +344,10 @@ export default function ChildCardV2({
                           backgroundColor: color,
                           borderColor: color
                         } : {}}
+                        title={labels[score as keyof typeof labels]}
                       >
-                        {score}
+                        <span className="text-xl md:text-2xl">{score}</span>
+                        <span className="text-[9px] md:text-[10px] opacity-70">{labels[score as keyof typeof labels]}</span>
                         {isSelected && (
                           <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
                         )}
