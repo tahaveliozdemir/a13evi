@@ -22,7 +22,7 @@ export function migrateScoreEntry(entry: ScoreEntry): ScoreEntry {
   Object.keys(entry).forEach(key => {
     if (key.startsWith('s') && typeof entry[key as keyof ScoreEntry] === 'number') {
       const oldScore = entry[key as keyof ScoreEntry] as number;
-      (newEntry as any)[key] = migrateScore(oldScore);
+      (newEntry as Record<string, unknown>)[key] = migrateScore(oldScore);
     }
   });
 

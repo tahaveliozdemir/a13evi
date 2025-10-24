@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { Child, AppSettings, UnsavedChanges } from '../types';
+import type { Child, AppSettings, UnsavedChanges, ScoreEntry } from '../types';
 import { calculateChildStats, getAverageColor } from '../utils/calculations';
 import Badge from './ui/Badge';
 import ProgressBar from './ui/ProgressBar';
@@ -81,7 +81,7 @@ export default function ChildCardV2({
     return { icon: '↓', color: 'text-red-500', label: 'Düşüyor' };
   };
 
-  const calculateAverage = (scoreEntry: any) => {
+  const calculateAverage = (scoreEntry: ScoreEntry) => {
     const scores: number[] = [];
     for (let i = 1; i <= settings.categories.length; i++) {
       const scoreKey = `s${i}` as keyof typeof scoreEntry;

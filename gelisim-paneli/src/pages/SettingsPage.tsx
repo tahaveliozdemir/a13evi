@@ -59,7 +59,7 @@ export default function SettingsPage() {
       try {
         const data = await getSettings();
         setSettings(data);
-      } catch (error) {
+      } catch {
         showToast('Ayarlar yüklenirken hata oluştu!', 'error');
       } finally {
         setLoading(false);
@@ -75,7 +75,7 @@ export default function SettingsPage() {
     try {
       await updateSettings(settings);
       showToast('Ayarlar başarıyla kaydedildi!', 'success');
-    } catch (error) {
+    } catch {
       showToast('Ayarlar kaydedilirken hata oluştu!', 'error');
     } finally {
       setSaving(false);

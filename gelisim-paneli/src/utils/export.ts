@@ -37,7 +37,7 @@ export async function exportToExcel(children: Child[], settings: AppSettings) {
   children.forEach(child => {
     const stats = calculateChildStats(child, settings);
 
-    const rowData: any = {
+    const rowData: Record<string, string | number> = {
       name: child.name,
       totalEval: child.scores?.length || 0,
       neutralAvg: stats.neutralAvg?.average.toFixed(2) || '-',
@@ -104,14 +104,15 @@ export async function exportDetailedExcel(child: Child, settings: AppSettings) {
 
   // Add data
   child.scores?.forEach(score => {
-    const rowData: any = {
+    const rowData: Record<string, string | number> = {
       date: new Date(score.date).toLocaleDateString('tr-TR'),
       evaluator: score.evaluator
     };
 
     settings.categories.forEach((_, index) => {
       const scoreKey = `s${index + 1}` as keyof typeof score;
-      rowData[`s${index}`] = score[scoreKey] || '-';
+      const scoreValue = score[scoreKey];
+      rowData[`s${index}`] = typeof scoreValue === 'number' ? scoreValue : '-';
     });
 
     worksheet.addRow(rowData);

@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import { getChildren, saveChildren } from '../services/childrenService';
 import { getSettings, saveSettings } from '../services/settingsService';
-import type { Child, AppSettings, UnsavedChanges } from '../types';
+import type { Child, AppSettings, UnsavedChanges, ScoreEntry } from '../types';
 import { needsMigration, migrateChildren, migrateSettings } from '../utils/migration';
 
 interface EvaluationContextType {
@@ -127,6 +127,7 @@ export function EvaluationProvider({ children: childrenProp }: { children: React
         loadExistingScores(selectedDate);
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDate, children]);
 
   // Save unsaved changes to localStorage whenever they change
@@ -363,7 +364,7 @@ export function EvaluationProvider({ children: childrenProp }: { children: React
 
         if (Object.keys(changes.scores).length === settings.categories.length) {
           // Create new score entry
-          const newEntry: any = {
+          const newEntry: ScoreEntry = {
             date: selectedDate,
             evaluator: selectedEvaluator,
             descriptions: changes.descriptions || {}
@@ -371,7 +372,8 @@ export function EvaluationProvider({ children: childrenProp }: { children: React
 
           // Add scores (s1, s2, s3, s4...)
           Object.entries(changes.scores).forEach(([catIndex, score]) => {
-            newEntry[`s${parseInt(catIndex) + 1}`] = score;
+            const key = `s${parseInt(catIndex) + 1}`;
+            (newEntry as unknown as Record<string, unknown>)[key] = score;
           });
 
           // Remove old entry for this date and add new one
@@ -448,6 +450,7 @@ export function EvaluationProvider({ children: childrenProp }: { children: React
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useEvaluation() {
   const context = useContext(EvaluationContext);
   if (context === undefined) {

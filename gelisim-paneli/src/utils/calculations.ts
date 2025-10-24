@@ -15,7 +15,7 @@ export function calculateAverageWithRules(
 } | null {
   if (!scores || scores.length === 0) return null;
 
-  let remainingScores = [...scores];
+  const remainingScores = [...scores];
   let vetoApplied = false;
 
   // Apply cancel rule if enabled

@@ -32,12 +32,6 @@ export default function StatsPage() {
   const [performanceFilter, setPerformanceFilter] = useState<'all' | 'above' | 'below'>('all');
   const [showArchived, setShowArchived] = useState(false);
 
-  // Redirect if not admin
-  if (!isAdmin && !loading) {
-    navigate('/dashboard');
-    return null;
-  }
-
   // Filter children based on filters
   const filteredChildren = useMemo(() => {
     if (!settings) return [];
@@ -95,7 +89,7 @@ export default function StatsPage() {
           showToast(`${child.name} için Excel raporu indirildi!`, 'success');
         }
       }
-    } catch (error) {
+    } catch {
       showToast('Excel dışa aktarma başarısız!', 'error');
     }
   };
@@ -113,7 +107,7 @@ export default function StatsPage() {
           showToast(`${child.name} için PDF raporu indirildi!`, 'success');
         }
       }
-    } catch (error) {
+    } catch {
       showToast('PDF dışa aktarma başarısız!', 'error');
     }
   };
@@ -254,6 +248,12 @@ export default function StatsPage() {
     });
   }, [children, settings, selectedChild]);
 
+  // Redirect if not admin (after all hooks)
+  if (!isAdmin && !loading) {
+    navigate('/dashboard');
+    return null;
+  }
+
   if (loading) {
     return <LoadingSpinner />;
   }
@@ -331,7 +331,7 @@ export default function StatsPage() {
               <label className="block text-sm font-medium mb-2">Tarih Aralığı</label>
               <select
                 value={dateFilter}
-                onChange={(e) => setDateFilter(e.target.value as any)}
+                onChange={(e) => setDateFilter(e.target.value as 'all' | '7days' | '30days' | '90days')}
                 className="w-full px-4 py-2 bg-input-bg border border-input-border rounded-lg focus:ring-2 focus:ring-accent transition"
               >
                 <option value="all">Tüm Zamanlar</option>
@@ -346,7 +346,7 @@ export default function StatsPage() {
               <label className="block text-sm font-medium mb-2">Performans</label>
               <select
                 value={performanceFilter}
-                onChange={(e) => setPerformanceFilter(e.target.value as any)}
+                onChange={(e) => setPerformanceFilter(e.target.value as 'all' | 'above' | 'below')}
                 className="w-full px-4 py-2 bg-input-bg border border-input-border rounded-lg focus:ring-2 focus:ring-accent transition"
               >
                 <option value="all">Tümü</option>
