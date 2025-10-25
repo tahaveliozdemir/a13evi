@@ -1,12 +1,12 @@
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, onSnapshot, type Unsubscribe } from 'firebase/firestore';
 import { db } from './firebase';
 import type { Child } from '../types';
 
 const CHILDREN_DOC = 'score_tracker_data/main_data_document';
 
 /**
- * Get all children data from Firestore
- * NO WEBSOCKET - Uses regular get()
+ * Get all children data from Firestore (ONE-TIME READ)
+ * For initial load or when real-time updates are not needed
  */
 export async function getChildren(): Promise<Child[]> {
   try {
@@ -26,13 +26,50 @@ export async function getChildren(): Promise<Child[]> {
 }
 
 /**
+ * Subscribe to real-time children updates via WSS (Secure WebSocket)
+ * Returns unsubscribe function to clean up listener
+ *
+ * @param onUpdate - Callback fired when data changes (real-time)
+ * @param onError - Optional error handler
+ * @returns Unsubscribe function
+ */
+export function subscribeToChildren(
+  onUpdate: (children: Child[]) => void,
+  onError?: (error: Error) => void
+): Unsubscribe {
+  const docRef = doc(db, CHILDREN_DOC);
+
+  const unsubscribe = onSnapshot(
+    docRef,
+    (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        onUpdate(data.children || []);
+      } else {
+        onUpdate([]);
+      }
+    },
+    (error) => {
+      console.error('Error in children subscription:', error);
+      if (onError) {
+        onError(error as Error);
+      }
+    }
+  );
+
+  console.log('🔌 WSS Connected: Real-time children sync active');
+  return unsubscribe;
+}
+
+/**
  * Save children data to Firestore
- * NO WEBSOCKET - Uses regular setDoc()
+ * Changes will be automatically pushed to all connected clients via WSS
  */
 export async function saveChildren(children: Child[]): Promise<void> {
   try {
     const docRef = doc(db, CHILDREN_DOC);
     await setDoc(docRef, { children }, { merge: true });
+    console.log('💾 Data saved - Broadcasting to all clients via WSS');
   } catch (error) {
     console.error('Error saving children:', error);
     throw error;

@@ -11,7 +11,7 @@ import type { Child } from '../types';
 
 export default function DashboardPage() {
   const { user, isAdmin, signOut } = useAuth();
-  const { children, settings, loading } = useEvaluation();
+  const { children, settings, loading, isRealtimeConnected } = useEvaluation();
   const navigate = useNavigate();
 
   const [showDateModal, setShowDateModal] = useState(false);
@@ -327,8 +327,12 @@ export default function DashboardPage() {
                 <span className="px-3 py-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-full text-sm font-medium">
                   ✓ Firebase Bağlı
                 </span>
-                <span className="px-3 py-1 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-full text-sm font-medium">
-                  ✓ WebSocket Kapalı
+                <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                  isRealtimeConnected
+                    ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                    : 'bg-gray-500/10 text-gray-600 dark:text-gray-400'
+                }`}>
+                  {isRealtimeConnected ? '✓ WSS Aktif (Güvenli)' : '⏸ WSS Bağlanıyor...'}
                 </span>
                 {isAdmin && (
                   <span className="px-3 py-1 bg-purple-500/10 text-purple-600 dark:text-purple-400 rounded-full text-sm font-medium">
