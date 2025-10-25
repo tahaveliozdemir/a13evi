@@ -1,15 +1,17 @@
 import { doc, getDoc, setDoc, onSnapshot, type Unsubscribe } from 'firebase/firestore';
 import { db } from './firebase';
 import type { Child } from '../types';
+import { retryAsync } from '../utils/retryUtils';
 
 const CHILDREN_DOC = 'score_tracker_data/main_data_document';
 
 /**
  * Get all children data from Firestore (ONE-TIME READ)
  * For initial load or when real-time updates are not needed
+ * Includes automatic retry mechanism for transient failures
  */
 export async function getChildren(): Promise<Child[]> {
-  try {
+  return retryAsync(async () => {
     const docRef = doc(db, CHILDREN_DOC);
     const docSnap = await getDoc(docRef);
 
@@ -19,10 +21,10 @@ export async function getChildren(): Promise<Child[]> {
     }
 
     return [];
-  } catch (error) {
-    console.error('Error fetching children:', error);
-    throw error;
-  }
+  }, {
+    maxAttempts: 3,
+    initialDelay: 1000,
+  });
 }
 
 /**
@@ -64,16 +66,17 @@ export function subscribeToChildren(
 /**
  * Save children data to Firestore
  * Changes will be automatically pushed to all connected clients via WSS
+ * Includes automatic retry mechanism for transient failures
  */
 export async function saveChildren(children: Child[]): Promise<void> {
-  try {
+  return retryAsync(async () => {
     const docRef = doc(db, CHILDREN_DOC);
     await setDoc(docRef, { children }, { merge: true });
     console.log('💾 Data saved - Broadcasting to all clients via WSS');
-  } catch (error) {
-    console.error('Error saving children:', error);
-    throw error;
-  }
+  }, {
+    maxAttempts: 3,
+    initialDelay: 1000,
+  });
 }
 
 /**
