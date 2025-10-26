@@ -31,7 +31,6 @@ export default function DashboardPage() {
 
   const handleEvaluatorSubmit = (evaluatorName: string) => {
     setShowEvaluatorModal(false);
-    // Navigate to evaluation page with date and evaluator
     navigate('/evaluation', {
       state: {
         date: selectedDate,
@@ -55,12 +54,10 @@ export default function DashboardPage() {
   };
 
   if (settings && children.length > 0) {
-    // Calculate average score across all children
     const childrenStats = children.map(child => calculateChildStats(child, settings));
     const totalAvg = childrenStats.reduce((sum, s) => sum + (s.average ?? 0), 0);
     stats.averageScore = childrenStats.length > 0 ? totalAvg / childrenStats.length : 0;
 
-    // Calculate success rate (above threshold)
     const successfulChildren = childrenStats.filter(s => (s.average ?? 0) >= settings.threshold);
     stats.successRate = childrenStats.length > 0 ? (successfulChildren.length / childrenStats.length) * 100 : 0;
 
@@ -85,9 +82,8 @@ export default function DashboardPage() {
       }
     });
 
-    // Sort by date descending
     stats.recentEvaluations.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    stats.recentEvaluations = stats.recentEvaluations.slice(0, 5); // Top 5 recent
+    stats.recentEvaluations = stats.recentEvaluations.slice(0, 5);
   }
 
   // Top performers
@@ -103,233 +99,228 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-7xl mx-auto p-4 md:p-8">
-        {/* Header */}
-        <header className="card p-6 mb-8">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">Dashboard</h1>
-              <p className="text-text-muted mt-1 text-sm sm:text-base flex items-center gap-2">
-                {userProfile && (
-                  <span className="font-medium">
-                    {ROLE_INFO[userProfile.role].emoji} {ROLE_INFO[userProfile.role].label}
-                  </span>
-                )}
-                <span className="text-xs">•</span>
-                <span>{user?.email || 'Anonim'}</span>
-              </p>
-            </div>
-            <div className="flex items-center gap-3 w-full sm:w-auto">
-              <DarkModeToggle />
-              <button
-                onClick={handleLogout}
-                className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition flex-1 sm:flex-none"
-              >
-                Çıkış
-              </button>
-            </div>
-          </div>
-        </header>
-
-        {/* Quick Actions */}
-        <div className={`grid grid-cols-1 ${isAdmin ? 'md:grid-cols-3' : 'md:grid-cols-1'} gap-6 mb-8`}>
-          <button
-            onClick={handleStartEvaluation}
-            className="card p-8 hover:shadow-xl transition-all transform hover:scale-105 text-left"
-          >
-            <div className="flex items-center gap-4">
-              <div className="h-16 w-16 bg-emerald-500 rounded-xl flex items-center justify-center">
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                </svg>
-              </div>
-              <div>
-                <h3 className="text-xl font-bold">Değerlendirme Yap</h3>
-                <p className="text-text-muted text-sm">Günlük değerlendirme başlat</p>
-              </div>
-            </div>
-          </button>
-
-          {isAdmin && (
-            <>
-              <button
-                onClick={() => navigate('/stats')}
-                className="card p-8 hover:shadow-xl transition-all transform hover:scale-105 text-left"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="h-16 w-16 bg-purple-500 rounded-xl flex items-center justify-center">
-                    <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold">İstatistikler</h3>
-                    <p className="text-text-muted text-sm">Grafikler ve analiz</p>
-                  </div>
-                </div>
-              </button>
-
-              <button
-                onClick={() => navigate('/settings')}
-                className="card p-8 hover:shadow-xl transition-all transform hover:scale-105 text-left"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="h-16 w-16 bg-blue-500 rounded-xl flex items-center justify-center">
-                    <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold">Ayarlar</h3>
-                    <p className="text-text-muted text-sm">Kategoriler ve kurallar</p>
-                  </div>
-                </div>
-              </button>
-            </>
+    <div className="relative w-full min-h-screen flex flex-col pb-24 bg-background-light dark:bg-background-dark font-display">
+      {/* Header */}
+      <div className="sticky top-0 z-10 flex items-center bg-background-light dark:bg-background-dark p-4 justify-between border-b border-border-light dark:border-border-dark shadow-sm">
+        <div className="flex flex-col">
+          <h1 className="text-text-light-primary dark:text-text-dark-primary text-xl font-bold">
+            Gelişim Paneli
+          </h1>
+          {userProfile && (
+            <p className="text-text-light-secondary dark:text-text-dark-secondary text-xs flex items-center gap-1.5">
+              <span>{ROLE_INFO[userProfile.role].emoji}</span>
+              <span>{ROLE_INFO[userProfile.role].label}</span>
+              <span>•</span>
+              <span>{user?.email || 'Anonim'}</span>
+            </p>
           )}
         </div>
+        <div className="flex items-center gap-2">
+          <DarkModeToggle />
+          <button
+            onClick={handleLogout}
+            className="flex items-center justify-center h-10 w-10 text-text-light-primary dark:text-text-dark-primary hover:bg-card-light dark:hover:bg-card-dark rounded-lg transition-colors"
+          >
+            <span className="material-symbols-outlined text-2xl">logout</span>
+          </button>
+        </div>
+      </div>
 
-        {/* Statistics Cards */}
+      {/* Main Content */}
+      <main className="flex-1 flex flex-col gap-6 p-4">
         {loading ? (
           <div className="py-12">
             <LoadingSpinner message="İstatistikler yükleniyor..." fullScreen={false} />
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
-              {/* Total Children */}
-              <div className="card p-6">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-text-muted text-sm font-medium">Toplam Çocuk</span>
-                  <svg className="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                  </svg>
-                </div>
-                <div className="text-2xl sm:text-3xl font-bold">{stats.totalChildren}</div>
-                <p className="text-text-muted text-xs mt-1">Kayıtlı çocuk sayısı</p>
+            {/* Stats Cards */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="flex flex-col gap-2 rounded-xl p-4 bg-card-light dark:bg-card-dark shadow-sm border border-border-light dark:border-border-dark">
+                <span className="material-symbols-outlined text-primary text-2xl">groups</span>
+                <p className="text-text-light-secondary dark:text-text-dark-secondary text-sm font-medium">
+                  Toplam Çocuk
+                </p>
+                <p className="text-text-light-primary dark:text-text-dark-primary text-2xl font-bold">
+                  {stats.totalChildren}
+                </p>
               </div>
 
-              {/* Total Evaluations */}
-              <div className="card p-6">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-text-muted text-sm font-medium">Toplam Değerlendirme</span>
-                  <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                </div>
-                <div className="text-2xl sm:text-3xl font-bold">{stats.totalEvaluations}</div>
-                <p className="text-text-muted text-xs mt-1">Tüm kayıtlar</p>
+              <div className="flex flex-col gap-2 rounded-xl p-4 bg-card-light dark:bg-card-dark shadow-sm border border-border-light dark:border-border-dark">
+                <span className="material-symbols-outlined text-primary text-2xl">checklist</span>
+                <p className="text-text-light-secondary dark:text-text-dark-secondary text-sm font-medium">
+                  Değerlendirme
+                </p>
+                <p className="text-text-light-primary dark:text-text-dark-primary text-2xl font-bold">
+                  {stats.totalEvaluations}
+                </p>
               </div>
 
-              {/* Average Score */}
-              <div className="card p-6">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-text-muted text-sm font-medium">Genel Ortalama</span>
-                  <svg className="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                  </svg>
-                </div>
-                <div className="text-2xl sm:text-3xl font-bold">{stats.averageScore.toFixed(2)}</div>
-                <p className="text-text-muted text-xs mt-1">Tüm çocuklar ortalaması</p>
+              <div className="flex flex-col gap-2 rounded-xl p-4 bg-card-light dark:bg-card-dark shadow-sm border border-border-light dark:border-border-dark">
+                <span className="material-symbols-outlined text-primary text-2xl">star</span>
+                <p className="text-text-light-secondary dark:text-text-dark-secondary text-sm font-medium">
+                  Ortalama Puan
+                </p>
+                <p className="text-text-light-primary dark:text-text-dark-primary text-2xl font-bold">
+                  {stats.averageScore.toFixed(2)}
+                </p>
               </div>
 
-              {/* Success Rate */}
-              <div className="card p-6">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-text-muted text-sm font-medium">Başarı Oranı</span>
-                  <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                  </svg>
-                </div>
-                <div className="text-2xl sm:text-3xl font-bold">{stats.successRate.toFixed(0)}%</div>
-                <p className="text-text-muted text-xs mt-1">Eşik üstü çocuklar</p>
+              <div className="flex flex-col gap-2 rounded-xl p-4 bg-card-light dark:bg-card-dark shadow-sm border border-border-light dark:border-border-dark">
+                <span className="material-symbols-outlined text-primary text-2xl">trending_up</span>
+                <p className="text-text-light-secondary dark:text-text-dark-secondary text-sm font-medium">
+                  Başarı Oranı
+                </p>
+                <p className="text-text-light-primary dark:text-text-dark-primary text-2xl font-bold">
+                  {stats.successRate.toFixed(0)}%
+                </p>
               </div>
             </div>
 
-            {/* Two Column Layout for Recent & Top */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            {/* Quick Actions */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <button
+                onClick={handleStartEvaluation}
+                className="flex items-center gap-4 bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark rounded-xl p-6 shadow-sm hover:shadow-md transition-all"
+              >
+                <div className="h-14 w-14 bg-primary/20 rounded-xl flex items-center justify-center">
+                  <span className="material-symbols-outlined text-primary text-3xl">edit_note</span>
+                </div>
+                <div className="text-left">
+                  <h3 className="text-text-light-primary dark:text-text-dark-primary text-lg font-bold">
+                    Değerlendirme Yap
+                  </h3>
+                  <p className="text-text-light-secondary dark:text-text-dark-secondary text-sm">
+                    Yeni değerlendirme başlat
+                  </p>
+                </div>
+              </button>
+
+              {isAdmin && (
+                <>
+                  <button
+                    onClick={() => navigate('/stats')}
+                    className="flex items-center gap-4 bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark rounded-xl p-6 shadow-sm hover:shadow-md transition-all"
+                  >
+                    <div className="h-14 w-14 bg-primary/20 rounded-xl flex items-center justify-center">
+                      <span className="material-symbols-outlined text-primary text-3xl">bar_chart</span>
+                    </div>
+                    <div className="text-left">
+                      <h3 className="text-text-light-primary dark:text-text-dark-primary text-lg font-bold">
+                        İstatistikler
+                      </h3>
+                      <p className="text-text-light-secondary dark:text-text-dark-secondary text-sm">
+                        Grafikler ve analiz
+                      </p>
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => navigate('/settings')}
+                    className="flex items-center gap-4 bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark rounded-xl p-6 shadow-sm hover:shadow-md transition-all"
+                  >
+                    <div className="h-14 w-14 bg-primary/20 rounded-xl flex items-center justify-center">
+                      <span className="material-symbols-outlined text-primary text-3xl">settings</span>
+                    </div>
+                    <div className="text-left">
+                      <h3 className="text-text-light-primary dark:text-text-dark-primary text-lg font-bold">
+                        Ayarlar
+                      </h3>
+                      <p className="text-text-light-secondary dark:text-text-dark-secondary text-sm">
+                        Kategoriler ve kurallar
+                      </p>
+                    </div>
+                  </button>
+                </>
+              )}
+            </div>
+
+            {/* Recent Evaluations & Top Performers */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Recent Evaluations */}
-              <div className="card p-6">
-                <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  Son Değerlendirmeler
-                </h2>
-                {stats.recentEvaluations.length === 0 ? (
-                  <p className="text-text-muted text-center py-8">Henüz değerlendirme yok</p>
-                ) : (
-                  <div className="space-y-3">
-                    {stats.recentEvaluations.map((evaluation, index) => (
-                      <div key={index} className="p-3 bg-input-bg rounded-lg border border-input-border">
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1">
-                            <div className="font-medium">{evaluation.childName}</div>
-                            <div className="text-sm text-text-muted">
-                              {new Date(evaluation.date).toLocaleDateString('tr-TR')} • {evaluation.evaluator}
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <div className={`text-lg font-bold ${
-                              evaluation.avg >= (settings?.threshold || 3.25) ? 'text-emerald-500' : 'text-amber-500'
-                            }`}>
-                              {evaluation.avg.toFixed(2)}
-                            </div>
-                          </div>
+              <div className="flex flex-col gap-3">
+                <div className="flex justify-between items-center">
+                  <h2 className="text-text-light-primary dark:text-text-dark-primary text-lg font-bold">
+                    Son Değerlendirmeler
+                  </h2>
+                  <button className="text-primary text-sm font-semibold hover:text-primary/80">
+                    Tümünü Gör
+                  </button>
+                </div>
+                <div className="flex flex-col bg-card-light dark:bg-card-dark rounded-xl shadow-sm border border-border-light dark:border-border-dark divide-y divide-border-light dark:divide-border-dark">
+                  {stats.recentEvaluations.length === 0 ? (
+                    <div className="p-8 text-center text-text-light-secondary dark:text-text-dark-secondary">
+                      Henüz değerlendirme yok
+                    </div>
+                  ) : (
+                    stats.recentEvaluations.map((evaluation, index) => (
+                      <div key={index} className="flex items-center gap-4 p-4 min-h-[72px] justify-between">
+                        <div className="flex-1">
+                          <p className="text-text-light-primary dark:text-text-dark-primary text-base font-medium">
+                            {evaluation.childName}
+                          </p>
+                          <p className="text-text-light-secondary dark:text-text-dark-secondary text-sm">
+                            {new Date(evaluation.date).toLocaleDateString('tr-TR')} • {evaluation.evaluator}
+                          </p>
                         </div>
+                        <p className={`text-base font-semibold ${
+                          evaluation.avg >= (settings?.threshold || 1.5) ? 'text-primary' : 'text-text-light-secondary dark:text-text-dark-secondary'
+                        }`}>
+                          {evaluation.avg.toFixed(2)}
+                        </p>
                       </div>
-                    ))}
-                  </div>
-                )}
+                    ))
+                  )}
+                </div>
               </div>
 
               {/* Top Performers */}
-              <div className="card p-6">
-                <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                  </svg>
+              <div className="flex flex-col gap-3">
+                <h2 className="text-text-light-primary dark:text-text-dark-primary text-lg font-bold">
                   En Başarılılar
                 </h2>
-                {topPerformers.length === 0 ? (
-                  <p className="text-text-muted text-center py-8">Henüz veri yok</p>
-                ) : (
-                  <div className="space-y-3">
-                    {topPerformers.slice(0, 5).map((performer, index) => (
-                      <div key={performer.child.id} className="p-3 bg-input-bg rounded-lg border border-input-border">
-                        <div className="flex items-center gap-3">
-                          <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-bold ${
+                <div className="flex flex-col bg-card-light dark:bg-card-dark rounded-xl shadow-sm border border-border-light dark:border-border-dark divide-y divide-border-light dark:divide-border-dark">
+                  {topPerformers.length === 0 ? (
+                    <div className="p-8 text-center text-text-light-secondary dark:text-text-dark-secondary">
+                      Henüz veri yok
+                    </div>
+                  ) : (
+                    topPerformers.slice(0, 5).map((performer, index) => (
+                      <div key={performer.child.id} className="flex items-center gap-4 p-4 min-h-[72px] justify-between">
+                        <div className="flex items-center gap-3 flex-1">
+                          <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
                             index === 0 ? 'bg-amber-500 text-white' :
                             index === 1 ? 'bg-gray-400 text-white' :
                             index === 2 ? 'bg-orange-600 text-white' :
-                            'bg-blue-500/20 text-blue-600'
+                            'bg-primary/20 text-primary'
                           }`}>
                             {index + 1}
                           </div>
                           <div className="flex-1">
-                            <div className="font-medium">{performer.child.name}</div>
-                            <div className="text-xs text-text-muted">
+                            <p className="text-text-light-primary dark:text-text-dark-primary text-base font-medium">
+                              {performer.child.name}
+                            </p>
+                            <p className="text-text-light-secondary dark:text-text-dark-secondary text-sm">
                               {performer.child.scores?.length || 0} değerlendirme
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <div className="text-lg font-bold text-emerald-500">
-                              {performer.avg.toFixed(2)}
-                            </div>
+                            </p>
                           </div>
                         </div>
+                        <div className="flex items-center gap-1 font-semibold text-primary">
+                          <span className="material-symbols-outlined text-base">emoji_events</span>
+                          <p className="text-base">{performer.avg.toFixed(2)}</p>
+                        </div>
                       </div>
-                    ))}
-                  </div>
-                )}
+                    ))
+                  )}
+                </div>
               </div>
             </div>
 
-            {/* Info Card */}
-            <div className="card p-6">
-              <h2 className="text-xl font-bold mb-4">Sistem Durumu</h2>
+            {/* System Status */}
+            <div className="bg-card-light dark:bg-card-dark rounded-xl shadow-sm border border-border-light dark:border-border-dark p-6">
+              <h2 className="text-text-light-primary dark:text-text-dark-primary text-lg font-bold mb-4">
+                Sistem Durumu
+              </h2>
               <div className="flex flex-wrap gap-2">
                 <span className="px-3 py-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-full text-sm font-medium">
                   ✓ Firebase Bağlı
@@ -355,7 +346,15 @@ export default function DashboardPage() {
             </div>
           </>
         )}
-      </div>
+      </main>
+
+      {/* Floating Action Button */}
+      <button
+        onClick={handleStartEvaluation}
+        className="fixed bottom-6 right-6 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-white shadow-lg transition-transform hover:scale-105 active:scale-95 md:hidden"
+      >
+        <span className="material-symbols-outlined text-3xl">add</span>
+      </button>
 
       {/* Modals */}
       <DateSelectorModal

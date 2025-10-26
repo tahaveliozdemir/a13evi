@@ -10,6 +10,8 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [isStaffLogin, setIsStaffLogin] = useState(true);
 
   // If already logged in as admin, redirect to dashboard
   if (isAdmin) {
@@ -38,96 +40,152 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-yaban-darkest flex flex-col items-center justify-center p-4 font-display">
       {/* Dark Mode Toggle */}
       <div className="fixed top-4 right-4 z-50">
         <DarkModeToggle />
       </div>
 
-      <div className="max-w-md w-full space-y-8">
-        {/* Header */}
-        <div className="text-center">
-          <div className="mx-auto h-20 w-20 bg-accent rounded-full flex items-center justify-center mb-4">
-            <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-            </svg>
+      <div className="w-full max-w-md">
+        {/* Logo & Header */}
+        <div className="mb-8 flex justify-center">
+          <div className="flex items-center justify-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-yaban-dark text-yaban-lightest">
+              <span className="material-symbols-outlined text-3xl">
+                psychology
+              </span>
+            </div>
+            <span className="text-2xl font-bold text-yaban-lightest">Gelişim Paneli</span>
           </div>
-          <h1 className="text-4xl font-extrabold text-gray-900 dark:text-white tracking-tight">
-            Gelişim Paneli
+        </div>
+
+        {/* Welcome Text */}
+        <div className="text-center">
+          <h1 className="text-yaban-lightest tracking-tight text-[32px] font-bold leading-tight">
+            {isStaffLogin ? 'Hoş Geldiniz' : 'Yönetici Girişi'}
           </h1>
-          <p className="mt-2 text-gray-600 dark:text-gray-400">
-            Çocuk Gelişim Takip Sistemi
+          <p className="text-yaban-light text-base font-normal leading-normal pt-2">
+            {isStaffLogin ? 'Gelişim Paneli hesabınıza giriş yapın' : 'Yönetici hesabınıza giriş yapın'}
           </p>
         </div>
 
-        {/* Login Options */}
-        <div className="space-y-4">
-          {/* Staff Login Button */}
-          <button
-            onClick={handleStaffLogin}
-            className="w-full flex items-center justify-center gap-3 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-4 px-6 rounded-xl shadow-lg transition-all transform hover:scale-105"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
-            Personel Girişi
-          </button>
+        {/* Login Form */}
+        <div className="mt-8">
+          {isStaffLogin ? (
+            /* Staff Login */
+            <div className="flex flex-col gap-4">
+              <button
+                onClick={handleStaffLogin}
+                className="flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-5 bg-yaban-mid text-yaban-lightest text-base font-bold leading-normal tracking-[0.015em] hover:bg-yaban-light focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yaban-mid focus:ring-offset-yaban-darkest transition-colors duration-200"
+              >
+                <span className="truncate">Personel Girişi</span>
+              </button>
 
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300 dark:border-gray-600"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 text-gray-500 dark:text-gray-400">
-                veya
-              </span>
-            </div>
-          </div>
-
-          {/* Admin Login Form */}
-          <div className="card p-6">
-            <h3 className="text-lg font-bold text-center mb-4">Yönetici Girişi</h3>
-
-            {error && (
-              <div className="mb-4 p-3 bg-red-500/10 border border-red-500/50 text-red-600 dark:text-red-400 rounded-lg text-sm">
-                {error}
-              </div>
-            )}
-
-            <form onSubmit={handleAdminLogin} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">E-posta</label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-3 bg-input-bg border border-input-border rounded-lg focus:ring-2 focus:ring-accent transition"
-                  placeholder="admin@example.com"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">Şifre</label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-3 bg-input-bg border border-input-border rounded-lg focus:ring-2 focus:ring-accent transition"
-                  placeholder="••••••••"
-                  required
-                />
+              <div className="flex items-center gap-3">
+                <div className="flex-1 h-px bg-yaban-mid"></div>
+                <span className="text-sm text-yaban-light">veya</span>
+                <div className="flex-1 h-px bg-yaban-mid"></div>
               </div>
 
               <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-accent hover:bg-accent-hover text-white font-bold py-3 px-6 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={() => setIsStaffLogin(false)}
+                className="text-sm font-medium text-yaban-lightest hover:text-yaban-light focus:outline-none focus:ring-2 focus:ring-yaban-mid rounded-sm text-center"
               >
-                {loading ? 'Giriş yapılıyor...' : 'Giriş Yap'}
+                Yönetici olarak giriş yap
+              </button>
+            </div>
+          ) : (
+            /* Admin Login Form */
+            <form onSubmit={handleAdminLogin} className="flex flex-col gap-4">
+              {error && (
+                <div className="p-3 bg-red-500/10 border border-red-500/50 text-red-400 rounded-lg text-sm">
+                  {error}
+                </div>
+              )}
+
+              <div className="flex flex-col">
+                <label className="text-yaban-lightest text-base font-medium leading-normal pb-2" htmlFor="email">
+                  E-posta Adresi
+                </label>
+                <input
+                  className="form-input flex w-full resize-none overflow-hidden rounded-lg text-yaban-lightest focus:outline-0 focus:ring-2 focus:ring-yaban-mid border border-yaban-mid bg-yaban-dark h-14 placeholder:text-yaban-light p-[15px] text-base font-normal leading-normal"
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="E-postanızı girin"
+                  required
+                />
+              </div>
+
+              <div className="flex flex-col">
+                <label className="text-yaban-lightest text-base font-medium leading-normal pb-2" htmlFor="password">
+                  Şifre
+                </label>
+                <div className="relative flex w-full items-stretch">
+                  <input
+                    className="form-input flex w-full resize-none overflow-hidden rounded-lg text-yaban-lightest focus:outline-0 focus:ring-2 focus:ring-yaban-mid border border-yaban-mid bg-yaban-dark h-14 placeholder:text-yaban-light p-[15px] text-base font-normal leading-normal pr-12"
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Şifrenizi girin"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    aria-label="Toggle password visibility"
+                    className="absolute inset-y-0 right-0 flex items-center pr-4 text-yaban-light hover:text-yaban-lightest transition-colors"
+                  >
+                    <span className="material-symbols-outlined">
+                      {showPassword ? 'visibility_off' : 'visibility'}
+                    </span>
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex justify-end pt-1">
+                <button
+                  type="button"
+                  className="text-sm font-medium text-yaban-lightest hover:text-yaban-light focus:outline-none focus:ring-2 focus:ring-yaban-mid rounded-sm"
+                >
+                  Şifrenizi mi unuttunuz?
+                </button>
+              </div>
+
+              <div className="pt-4">
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-5 bg-yaban-mid text-yaban-lightest text-base font-bold leading-normal tracking-[0.015em] hover:bg-yaban-light focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yaban-mid focus:ring-offset-yaban-darkest transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <span className="truncate">{loading ? 'Giriş yapılıyor...' : 'Giriş Yap'}</span>
+                </button>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setIsStaffLogin(true)}
+                className="text-sm font-medium text-yaban-lightest hover:text-yaban-light focus:outline-none focus:ring-2 focus:ring-yaban-mid rounded-sm text-center"
+              >
+                ← Personel girişine dön
               </button>
             </form>
-          </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="mt-12 text-center">
+          <p className="text-sm text-yaban-light">
+            Yardıma mı ihtiyacınız var?{' '}
+            <a
+              href="#"
+              className="font-medium text-yaban-lightest hover:text-yaban-light focus:outline-none focus:ring-2 focus:ring-yaban-mid rounded-sm"
+            >
+              Destek ile İletişime Geçin
+            </a>
+          </p>
         </div>
       </div>
     </div>

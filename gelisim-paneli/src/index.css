@@ -2,28 +2,33 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Yaban Color Palette CSS Variables */
 :root {
-  --background: #f8fafc;
-  --foreground: #0f172a;
-  --card-bg: white;
-  --card-border: #e2e8f0;
-  --input-bg: #f1f5f9;
-  --input-border: #cbd5e1;
-  --accent: #2563eb;
-  --accent-hover: #1d4ed8;
-  --text-muted: #64748b;
+  /* Light Mode */
+  --background: #F4F6F8;
+  --foreground: #1C1C1E;
+  --card-bg: #FFFFFF;
+  --card-border: #E5E5EA;
+  --input-bg: #FFFFFF;
+  --input-border: #E5E5EA;
+  --accent: #4C594F;
+  --accent-hover: #35403A;
+  --text-muted: #8A8A8F;
+  --primary: #A4A69C;
 }
 
 html.dark {
-  --background: #020617;
-  --foreground: #f8fafc;
-  --card-bg: #0f172a;
-  --card-border: #1e293b;
-  --input-bg: #1e293b;
-  --input-border: #334155;
-  --accent: #60a5fa;
-  --accent-hover: #3b82f6;
-  --text-muted: #94a3b8;
+  /* Dark Mode - Yaban Palette */
+  --background: #232625;
+  --foreground: #BFBFB8;
+  --card-bg: #35403A;
+  --card-border: #4C594F;
+  --input-bg: #232625;
+  --input-border: #4C594F;
+  --accent: #4C594F;
+  --accent-hover: #A4A69C;
+  --text-muted: #A4A69C;
+  --primary: #A4A69C;
 }
 
 * {
@@ -33,19 +38,32 @@ html.dark {
 }
 
 body {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   background-color: var(--background);
   color: var(--foreground);
-  transition: background-color 0.3s, color 0.3s;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100dvh;
+}
+
+/* Material Symbols */
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  user-select: none;
 }
 
 @layer utilities {
   .card {
     background-color: var(--card-bg);
     border: 1px solid var(--card-border);
-    border-radius: 1.25rem;
-    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02), 0 2px 4px -2px rgba(0,0,0,0.02);
-    transition: background-color 0.3s, border-color 0.3s;
+    border-radius: 1rem;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
+    transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.2s ease;
+  }
+
+  .card:hover {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
   }
 
   /* Animations */
@@ -69,12 +87,27 @@ body {
     }
   }
 
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
   .animate-fadeIn {
     animation: fadeIn 0.2s ease-out;
   }
 
   .animate-scaleIn {
     animation: scaleIn 0.3s ease-out;
+  }
+
+  .animate-slideUp {
+    animation: slideUp 0.3s ease-out;
   }
 
   @keyframes slideInRight {
