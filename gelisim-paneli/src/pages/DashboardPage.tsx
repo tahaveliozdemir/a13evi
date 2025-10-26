@@ -8,9 +8,10 @@ import DarkModeToggle from '../components/DarkModeToggle';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { calculateChildStats } from '../utils/calculations';
 import type { Child } from '../types';
+import { ROLE_INFO } from '../utils/permissions';
 
 export default function DashboardPage() {
-  const { user, isAdmin, signOut } = useAuth();
+  const { user, isAdmin, userProfile, signOut } = useAuth();
   const { children, settings, loading, isRealtimeConnected } = useEvaluation();
   const navigate = useNavigate();
 
@@ -109,8 +110,14 @@ export default function DashboardPage() {
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
               <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">Dashboard</h1>
-              <p className="text-text-muted mt-1 text-sm sm:text-base">
-                {isAdmin ? '🔑 Yönetici' : '👤 Personel'} - {user?.email || 'Anonim'}
+              <p className="text-text-muted mt-1 text-sm sm:text-base flex items-center gap-2">
+                {userProfile && (
+                  <span className="font-medium">
+                    {ROLE_INFO[userProfile.role].emoji} {ROLE_INFO[userProfile.role].label}
+                  </span>
+                )}
+                <span className="text-xs">•</span>
+                <span>{user?.email || 'Anonim'}</span>
               </p>
             </div>
             <div className="flex items-center gap-3 w-full sm:w-auto">
