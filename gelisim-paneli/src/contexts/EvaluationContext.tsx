@@ -8,6 +8,7 @@ interface EvaluationContextType {
   // State
   selectedDate: string | null;
   selectedEvaluator: string | null;
+  selectedUnit: string | null;
   children: Child[];
   settings: AppSettings | null;
   unsavedChanges: UnsavedChanges;
@@ -16,7 +17,7 @@ interface EvaluationContextType {
   isRealtimeConnected: boolean; // WSS connection status
 
   // Actions
-  setEvaluationInfo: (date: string, evaluator: string) => void;
+  setEvaluationInfo: (date: string, evaluator: string, unit?: string) => void;
   updateScore: (childId: string, categoryIndex: number, score: number) => void;
   toggleAbsent: (childId: string) => void;
   updateDescription: (childId: string, categoryIndex: number, description: string) => void;
@@ -32,6 +33,7 @@ const EvaluationContext = createContext<EvaluationContextType | undefined>(undef
 export function EvaluationProvider({ children: childrenProp }: { children: ReactNode }) {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedEvaluator, setSelectedEvaluator] = useState<string | null>(null);
+  const [selectedUnit, setSelectedUnit] = useState<string | null>(null);
   const [children, setChildren] = useState<Child[]>([]);
   const [settings, setSettings] = useState<AppSettings | null>(null);
   const [unsavedChanges, setUnsavedChanges] = useState<UnsavedChanges>({});
@@ -215,9 +217,10 @@ export function EvaluationProvider({ children: childrenProp }: { children: React
     setUnsavedChanges(changes);
   };
 
-  const setEvaluationInfo = (date: string, evaluator: string) => {
+  const setEvaluationInfo = (date: string, evaluator: string, unit?: string) => {
     setSelectedDate(date);
     setSelectedEvaluator(evaluator);
+    setSelectedUnit(unit || null);
   };
 
   const updateScore = (childId: string, categoryIndex: number, score: number) => {
@@ -416,6 +419,11 @@ export function EvaluationProvider({ children: childrenProp }: { children: React
             descriptions: changes.descriptions || {}
           };
 
+          // Add unit if selected
+          if (selectedUnit) {
+            newEntry.unit = selectedUnit;
+          }
+
           // Add scores (s1, s2, s3, s4...)
           Object.entries(changes.scores).forEach(([catIndex, score]) => {
             newEntry[`s${parseInt(catIndex) + 1}`] = score;
@@ -474,6 +482,7 @@ export function EvaluationProvider({ children: childrenProp }: { children: React
       value={{
         selectedDate,
         selectedEvaluator,
+        selectedUnit,
         children,
         settings,
         unsavedChanges,
