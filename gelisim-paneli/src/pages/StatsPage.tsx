@@ -259,14 +259,14 @@ export default function StatsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background-light dark:bg-background-dark font-display">
       <div className="max-w-7xl mx-auto p-4 md:p-8">
         {/* Header */}
-        <div className="card p-6 mb-6">
+        <div className="bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark shadow-sm p-6 mb-6">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold">Grafikler ve Trendler</h1>
-              <p className="text-text-muted mt-1 text-sm sm:text-base">Detaylı analiz ve görselleştirme</p>
+              <h1 className="text-2xl sm:text-3xl font-bold text-text-light-primary dark:text-text-dark-primary">Grafikler ve Trendler</h1>
+              <p className="text-text-light-secondary dark:text-text-dark-secondary mt-1 text-sm sm:text-base">Detaylı analiz ve görselleştirme</p>
             </div>
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto">
               <button
@@ -302,7 +302,7 @@ export default function StatsPage() {
         </div>
 
         {/* Advanced Filters */}
-        <div className="card p-6 mb-6">
+        <div className="bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark shadow-sm p-6 mb-6">
           <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
@@ -317,7 +317,7 @@ export default function StatsPage() {
               <select
                 value={selectedChild}
                 onChange={(e) => setSelectedChild(e.target.value)}
-                className="w-full px-4 py-2 bg-input-bg border border-input-border rounded-lg focus:ring-2 focus:ring-accent transition"
+                className="w-full px-4 py-2 bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark rounded-lg focus:ring-2 focus:ring-primary transition"
               >
                 <option value="all">Tüm Çocuklar</option>
                 {filteredChildren.map(child => (
@@ -332,7 +332,7 @@ export default function StatsPage() {
               <select
                 value={dateFilter}
                 onChange={(e) => setDateFilter(e.target.value as any)}
-                className="w-full px-4 py-2 bg-input-bg border border-input-border rounded-lg focus:ring-2 focus:ring-accent transition"
+                className="w-full px-4 py-2 bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark rounded-lg focus:ring-2 focus:ring-primary transition"
               >
                 <option value="all">Tüm Zamanlar</option>
                 <option value="7days">Son 7 Gün</option>
@@ -347,7 +347,7 @@ export default function StatsPage() {
               <select
                 value={performanceFilter}
                 onChange={(e) => setPerformanceFilter(e.target.value as any)}
-                className="w-full px-4 py-2 bg-input-bg border border-input-border rounded-lg focus:ring-2 focus:ring-accent transition"
+                className="w-full px-4 py-2 bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark rounded-lg focus:ring-2 focus:ring-primary transition"
               >
                 <option value="all">Tümü</option>
                 <option value="above">Eşik Üstü</option>
@@ -362,8 +362,8 @@ export default function StatsPage() {
                 onClick={() => setShowArchived(!showArchived)}
                 className={`w-full px-4 py-2 rounded-lg font-medium transition flex items-center justify-center gap-2 ${
                   showArchived
-                    ? 'bg-accent text-white'
-                    : 'bg-input-bg border border-input-border hover:bg-gray-500/10'
+                    ? 'bg-primary text-white'
+                    : 'bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark hover:bg-gray-500/10'
                 }`}
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -377,7 +377,7 @@ export default function StatsPage() {
           {/* Active Filters Summary */}
           {(dateFilter !== 'all' || performanceFilter !== 'all' || showArchived) && (
             <div className="mt-4 flex flex-wrap gap-2">
-              <span className="text-sm text-text-muted">Aktif Filtreler:</span>
+              <span className="text-sm text-text-light-secondary dark:text-text-dark-secondary">Aktif Filtreler:</span>
               {dateFilter !== 'all' && (
                 <span className="px-3 py-1 bg-accent/10 text-accent rounded-full text-sm flex items-center gap-1">
                   {dateFilter === '7days' ? 'Son 7 Gün' : dateFilter === '30days' ? 'Son 30 Gün' : 'Son 90 Gün'}
@@ -401,16 +401,16 @@ export default function StatsPage() {
         </div>
 
         {children.length === 0 ? (
-          <div className="card p-12 text-center">
-            <p className="text-text-muted text-lg">Henüz veri yok. Değerlendirme yaparak başlayın.</p>
+          <div className="bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark shadow-sm p-12 text-center">
+            <p className="text-text-light-secondary dark:text-text-dark-secondary text-lg">Henüz veri yok. Değerlendirme yaparak başlayın.</p>
           </div>
         ) : (
           <div className="space-y-6">
             {/* Trend Line Chart */}
-            <div className="card p-6">
+            <div className="bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark shadow-sm p-6">
               <h2 className="text-xl font-bold mb-4">Performans Trendi (Son 14 Gün)</h2>
               {trendData.length === 0 ? (
-                <p className="text-text-muted text-center py-12">Bu filtre için yeterli veri yok</p>
+                <p className="text-text-light-secondary dark:text-text-dark-secondary text-center py-12">Bu filtre için yeterli veri yok</p>
               ) : (
                 <ResponsiveContainer width="100%" height={300}>
                   <LineChart data={trendData}>
@@ -439,10 +439,10 @@ export default function StatsPage() {
             </div>
 
             {/* Category Bar Chart */}
-            <div className="card p-6">
+            <div className="bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark shadow-sm p-6">
               <h2 className="text-xl font-bold mb-4">Kategori Bazlı Ortalamalar</h2>
               {categoryData.length === 0 ? (
-                <p className="text-text-muted text-center py-12">Kategori verisi yok</p>
+                <p className="text-text-light-secondary dark:text-text-dark-secondary text-center py-12">Kategori verisi yok</p>
               ) : (
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={categoryData}>
@@ -465,10 +465,10 @@ export default function StatsPage() {
 
             {/* Distribution Pie Chart */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="card p-6">
+              <div className="bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark shadow-sm p-6">
                 <h2 className="text-xl font-bold mb-4">Puan Dağılımı</h2>
                 {distributionData.length === 0 ? (
-                  <p className="text-text-muted text-center py-12">Dağılım verisi yok</p>
+                  <p className="text-text-light-secondary dark:text-text-dark-secondary text-center py-12">Dağılım verisi yok</p>
                 ) : (
                   <ResponsiveContainer width="100%" height={300}>
                     <PieChart>
@@ -499,10 +499,10 @@ export default function StatsPage() {
               </div>
 
               {/* Achievement Stats */}
-              <div className="card p-6">
+              <div className="bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark shadow-sm p-6">
                 <h2 className="text-xl font-bold mb-4">Kazanım İstatistikleri</h2>
                 {achievementData.length === 0 ? (
-                  <p className="text-text-muted text-center py-12">Kazanım verisi yok</p>
+                  <p className="text-text-light-secondary dark:text-text-dark-secondary text-center py-12">Kazanım verisi yok</p>
                 ) : (
                   <div className="space-y-4">
                     {achievementData.map((achievement, index) => (
@@ -519,7 +519,7 @@ export default function StatsPage() {
                             style={{ width: `${achievement.percentage}%` }}
                           />
                         </div>
-                        <div className="flex items-center justify-between mt-2 text-sm text-text-muted">
+                        <div className="flex items-center justify-between mt-2 text-sm text-text-light-secondary dark:text-text-dark-secondary">
                           <span>✓ Başarılı: {achievement.achieved}</span>
                           <span>✗ Devam: {achievement.notAchieved}</span>
                         </div>
@@ -531,7 +531,7 @@ export default function StatsPage() {
             </div>
 
             {/* Summary Stats */}
-            <div className="card p-6">
+            <div className="bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark shadow-sm p-6">
               <h2 className="text-xl font-bold mb-4">Özet İstatistikler</h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="p-4 bg-purple-500/10 rounded-lg border border-purple-500/30">
