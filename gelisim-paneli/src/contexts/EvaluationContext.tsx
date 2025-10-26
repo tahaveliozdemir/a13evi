@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
-import { getChildren, saveChildren } from '../services/childrenService';
-import { getSettings, saveSettings } from '../services/settingsService';
+import { subscribeToChildren, saveChildren, getChildren } from '../services/childrenService';
+import { subscribeToSettings, saveSettings, getSettings } from '../services/settingsService';
 import type { Child, AppSettings, UnsavedChanges } from '../types';
 import { needsMigration, migrateChildren, migrateSettings } from '../utils/migration';
 
@@ -13,6 +13,7 @@ interface EvaluationContextType {
   unsavedChanges: UnsavedChanges;
   loading: boolean;
   saving: boolean;
+  isRealtimeConnected: boolean; // WSS connection status
 
   // Actions
   setEvaluationInfo: (date: string, evaluator: string) => void;
@@ -36,18 +37,23 @@ export function EvaluationProvider({ children: childrenProp }: { children: React
   const [unsavedChanges, setUnsavedChanges] = useState<UnsavedChanges>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [isRealtimeConnected, setIsRealtimeConnected] = useState(false);
 
-  // Load children and settings on mount (with auto-migration)
+  // Setup WSS real-time listeners on mount (with auto-migration)
   useEffect(() => {
-    async function loadData() {
+    let childrenUnsubscribe: (() => void) | null = null;
+    let settingsUnsubscribe: (() => void) | null = null;
+
+    async function setupRealtimeSync() {
       setLoading(true);
       try {
+        // First, do one-time read for migration check
         let [childrenData, settingsData] = await Promise.all([
           getChildren(),
           getSettings()
         ]);
 
-        // Auto-migrate if needed
+        // Auto-migrate if needed (only once)
         let migrated = false;
 
         if (needsMigration(settingsData)) {
@@ -77,6 +83,34 @@ export function EvaluationProvider({ children: childrenProp }: { children: React
 
         setChildren(childrenData);
         setSettings(settingsData);
+        setLoading(false);
+
+        // Now setup real-time WSS subscriptions
+        console.log('[WSS] Setting up real-time subscriptions...');
+
+        childrenUnsubscribe = subscribeToChildren(
+          (updatedChildren) => {
+            console.log('[WSS] Received real-time children update:', updatedChildren.length, 'children');
+            setChildren(updatedChildren);
+            setIsRealtimeConnected(true);
+          },
+          (error) => {
+            console.error('[WSS] Children subscription error:', error);
+            setIsRealtimeConnected(false);
+          }
+        );
+
+        settingsUnsubscribe = subscribeToSettings(
+          (updatedSettings) => {
+            console.log('[WSS] Received real-time settings update');
+            setSettings(updatedSettings);
+            setIsRealtimeConnected(true);
+          },
+          (error) => {
+            console.error('[WSS] Settings subscription error:', error);
+            setIsRealtimeConnected(false);
+          }
+        );
 
         if (migrated) {
           // Show migration success message
@@ -98,11 +132,24 @@ export function EvaluationProvider({ children: childrenProp }: { children: React
         }
       } catch (error) {
         console.error('Failed to load data:', error);
-      } finally {
         setLoading(false);
       }
     }
-    loadData();
+
+    setupRealtimeSync();
+
+    // Cleanup: Unsubscribe from real-time listeners on unmount
+    return () => {
+      if (childrenUnsubscribe) {
+        console.log('[WSS] Unsubscribing from children updates');
+        childrenUnsubscribe();
+      }
+      if (settingsUnsubscribe) {
+        console.log('[WSS] Unsubscribing from settings updates');
+        settingsUnsubscribe();
+      }
+      setIsRealtimeConnected(false);
+    };
   }, []);
 
   // Load unsaved changes from localStorage when date is set
@@ -432,6 +479,7 @@ export function EvaluationProvider({ children: childrenProp }: { children: React
         unsavedChanges,
         loading,
         saving,
+        isRealtimeConnected,
         setEvaluationInfo,
         updateScore,
         toggleAbsent,

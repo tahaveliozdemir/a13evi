@@ -1,0 +1,155 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ============================================
+    // HELPER FUNCTIONS
+    // ============================================
+
+    // Check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Get user role from custom claims
+    function getUserRole() {
+      return request.auth.token.role;
+    }
+
+    // Check if user has specific role
+    function hasRole(role) {
+      return isAuthenticated() && getUserRole() == role;
+    }
+
+    // Check if user has any of the specified roles
+    function hasAnyRole(roles) {
+      return isAuthenticated() && getUserRole() in roles;
+    }
+
+    // Check if user is admin or superadmin
+    function isAdmin() {
+      return hasAnyRole(['admin', 'superadmin']);
+    }
+
+    // Check if user is superadmin
+    function isSuperAdmin() {
+      return hasRole('superadmin');
+    }
+
+    // Check if user can read (viewer and above)
+    function canRead() {
+      return hasAnyRole(['viewer', 'staff', 'moderator', 'admin', 'superadmin']);
+    }
+
+    // Check if user can write new data (staff and above)
+    function canCreate() {
+      return hasAnyRole(['staff', 'moderator', 'admin', 'superadmin']);
+    }
+
+    // Check if user can update existing data (moderator and above)
+    function canUpdate() {
+      return hasAnyRole(['moderator', 'admin', 'superadmin']);
+    }
+
+    // Check if user can delete (admin and above)
+    function canDelete() {
+      return hasAnyRole(['admin', 'superadmin']);
+    }
+
+    // ============================================
+    // CHILDREN DATA (Main evaluation data)
+    // ============================================
+    match /score_tracker_data/{document} {
+      // Read: All authenticated users can read
+      allow read: if canRead();
+
+      // Create: Staff and above can create new records
+      allow create: if canCreate();
+
+      // Update: Moderator and above can update existing records
+      // Staff cannot update existing records (only create new)
+      allow update: if canUpdate();
+
+      // Delete: Only admin and superadmin can delete
+      allow delete: if canDelete();
+    }
+
+    // ============================================
+    // SETTINGS
+    // ============================================
+    match /settings/{document} {
+      // Read: All authenticated users can read settings
+      allow read: if isAuthenticated();
+
+      // Write: Only admin and superadmin can modify settings
+      allow write: if isAdmin();
+    }
+
+    // ============================================
+    // USERS COLLECTION (for role management)
+    // ============================================
+    match /users/{userId} {
+      // Users can read their own data
+      allow read: if isAuthenticated() && request.auth.uid == userId;
+
+      // Admin and superadmin can read all users
+      allow read: if isAdmin();
+
+      // Only superadmin can create/update/delete user records
+      allow write: if isSuperAdmin();
+    }
+
+    // ============================================
+    // AUDIT LOGS (for tracking important actions)
+    // ============================================
+    match /audit_logs/{logId} {
+      // Only admin and superadmin can read logs
+      allow read: if isAdmin();
+
+      // System can write logs (via Cloud Functions)
+      // Users cannot directly write logs
+      allow write: if false;
+    }
+
+    // ============================================
+    // BACKUPS (for automated backup system)
+    // ============================================
+    match /backups/{backupId} {
+      // Only superadmin can read backups
+      allow read: if isSuperAdmin();
+
+      // Only Cloud Functions can write backups
+      allow write: if false;
+    }
+
+    // ============================================
+    // COMMENTS/NOTES (for evaluation comments)
+    // ============================================
+    match /comments/{commentId} {
+      // All authenticated users can read comments
+      allow read: if canRead();
+
+      // Staff and above can create comments
+      allow create: if canCreate();
+
+      // Users can update their own comments
+      // Admin can update any comment
+      allow update: if isAuthenticated() && (
+        resource.data.authorId == request.auth.uid || isAdmin()
+      );
+
+      // Users can delete their own comments
+      // Admin can delete any comment
+      allow delete: if isAuthenticated() && (
+        resource.data.authorId == request.auth.uid || isAdmin()
+      );
+    }
+
+    // ============================================
+    // DEFAULT DENY ALL (Security best practice)
+    // ============================================
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

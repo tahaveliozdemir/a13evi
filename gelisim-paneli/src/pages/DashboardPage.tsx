@@ -8,10 +8,11 @@ import DarkModeToggle from '../components/DarkModeToggle';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { calculateChildStats } from '../utils/calculations';
 import type { Child } from '../types';
+import { ROLE_INFO } from '../utils/permissions';
 
 export default function DashboardPage() {
-  const { user, isAdmin, signOut } = useAuth();
-  const { children, settings, loading } = useEvaluation();
+  const { user, isAdmin, userProfile, signOut } = useAuth();
+  const { children, settings, loading, isRealtimeConnected } = useEvaluation();
   const navigate = useNavigate();
 
   const [showDateModal, setShowDateModal] = useState(false);
@@ -101,9 +102,19 @@ export default function DashboardPage() {
     <div className="relative w-full min-h-screen flex flex-col pb-24 bg-background-light dark:bg-background-dark font-display">
       {/* Header */}
       <div className="sticky top-0 z-10 flex items-center bg-background-light dark:bg-background-dark p-4 justify-between border-b border-border-light dark:border-border-dark shadow-sm">
-        <h1 className="text-text-light-primary dark:text-text-dark-primary text-xl font-bold">
-          Gelişim Paneli
-        </h1>
+        <div className="flex flex-col">
+          <h1 className="text-text-light-primary dark:text-text-dark-primary text-xl font-bold">
+            Gelişim Paneli
+          </h1>
+          {userProfile && (
+            <p className="text-text-light-secondary dark:text-text-dark-secondary text-xs flex items-center gap-1.5">
+              <span>{ROLE_INFO[userProfile.role].emoji}</span>
+              <span>{ROLE_INFO[userProfile.role].label}</span>
+              <span>•</span>
+              <span>{user?.email || 'Anonim'}</span>
+            </p>
+          )}
+        </div>
         <div className="flex items-center gap-2">
           <DarkModeToggle />
           <button
@@ -302,6 +313,35 @@ export default function DashboardPage() {
                     ))
                   )}
                 </div>
+              </div>
+            </div>
+
+            {/* System Status */}
+            <div className="bg-card-light dark:bg-card-dark rounded-xl shadow-sm border border-border-light dark:border-border-dark p-6">
+              <h2 className="text-text-light-primary dark:text-text-dark-primary text-lg font-bold mb-4">
+                Sistem Durumu
+              </h2>
+              <div className="flex flex-wrap gap-2">
+                <span className="px-3 py-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-full text-sm font-medium">
+                  ✓ Firebase Bağlı
+                </span>
+                <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                  isRealtimeConnected
+                    ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                    : 'bg-gray-500/10 text-gray-600 dark:text-gray-400'
+                }`}>
+                  {isRealtimeConnected ? '✓ WSS Aktif (Güvenli)' : '⏸ WSS Bağlanıyor...'}
+                </span>
+                {isAdmin && (
+                  <span className="px-3 py-1 bg-purple-500/10 text-purple-600 dark:text-purple-400 rounded-full text-sm font-medium">
+                    ✓ Admin Erişimi
+                  </span>
+                )}
+                {settings && (
+                  <span className="px-3 py-1 bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-full text-sm font-medium">
+                    ✓ {settings.categories.length} Kategori
+                  </span>
+                )}
               </div>
             </div>
           </>
