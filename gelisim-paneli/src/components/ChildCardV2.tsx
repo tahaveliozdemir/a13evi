@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, memo, useMemo } from 'react';
 import type { Child, AppSettings, UnsavedChanges, ScoreEntry } from '../types';
 import { calculateChildStats, getAverageColor } from '../utils/calculations';
 import Badge from './ui/Badge';
@@ -23,9 +23,9 @@ const SCORE_COLORS = {
   2: { bg: '#059669', text: 'text-emerald-600' }, // Başarılı
   1: { bg: '#eab308', text: 'text-yellow-600' }, // Orta
   0: { bg: '#dc2626', text: 'text-red-600' }  // Yetersiz
-};
+} as const;
 
-export default function ChildCardV2({
+function ChildCardV2Component({
   child,
   settings,
   unsavedChanges,
@@ -42,7 +42,9 @@ export default function ChildCardV2({
   const [isExpanded, setIsExpanded] = useState(true);
   const [showQuickActions, setShowQuickActions] = useState(false);
 
-  const stats = calculateChildStats(child, settings);
+  // Memoize expensive calculations
+  const stats = useMemo(() => calculateChildStats(child, settings), [child, settings]);
+
   const completedCategories = unsavedChanges ? Object.keys(unsavedChanges.scores).length : 0;
   const totalCategories = settings.categories.length;
   const isComplete = completedCategories === totalCategories;
@@ -379,3 +381,7 @@ export default function ChildCardV2({
     </div>
   );
 }
+
+// Export memoized component for better performance
+const ChildCardV2 = memo(ChildCardV2Component);
+export default ChildCardV2;
