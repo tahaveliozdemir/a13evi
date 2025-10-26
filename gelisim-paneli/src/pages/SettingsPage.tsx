@@ -202,14 +202,14 @@ export default function SettingsPage() {
   if (!settings) return null;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background-light dark:bg-background-dark font-display">
       <div className="max-w-7xl mx-auto p-4 md:p-8">
         {/* Header */}
-        <div className="card p-6 mb-6">
+        <div className="bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark shadow-sm p-6 mb-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold">Ayarlar</h1>
-              <p className="text-text-muted mt-1 text-sm sm:text-base">Uygulama yapılandırmasını yönetin</p>
+              <h1 className="text-2xl sm:text-3xl font-bold text-text-light-primary dark:text-text-dark-primary">Ayarlar</h1>
+              <p className="text-text-light-secondary dark:text-text-dark-secondary mt-1 text-sm sm:text-base">Uygulama yapılandırmasını yönetin</p>
             </div>
             <button
               onClick={() => navigate('/dashboard')}
@@ -221,13 +221,13 @@ export default function SettingsPage() {
         </div>
 
         {/* Tabs */}
-        <div className="card p-2 mb-6">
+        <div className="bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark shadow-sm p-2 mb-6">
           <div className="flex gap-2">
             <button
               onClick={() => setActiveTab('categories')}
               className={`flex-1 py-3 px-2 sm:px-4 rounded-lg font-medium text-sm sm:text-base transition ${
                 activeTab === 'categories'
-                  ? 'bg-accent text-white'
+                  ? 'bg-primary text-white'
                   : 'bg-transparent hover:bg-gray-500/10'
               }`}
             >
@@ -237,7 +237,7 @@ export default function SettingsPage() {
               onClick={() => setActiveTab('rules')}
               className={`flex-1 py-3 px-2 sm:px-4 rounded-lg font-medium text-sm sm:text-base transition ${
                 activeTab === 'rules'
-                  ? 'bg-accent text-white'
+                  ? 'bg-primary text-white'
                   : 'bg-transparent hover:bg-gray-500/10'
               }`}
             >
@@ -247,7 +247,7 @@ export default function SettingsPage() {
               onClick={() => setActiveTab('periods')}
               className={`flex-1 py-3 px-2 sm:px-4 rounded-lg font-medium text-sm sm:text-base transition ${
                 activeTab === 'periods'
-                  ? 'bg-accent text-white'
+                  ? 'bg-primary text-white'
                   : 'bg-transparent hover:bg-gray-500/10'
               }`}
             >
@@ -258,7 +258,7 @@ export default function SettingsPage() {
 
         {/* Categories Tab */}
         {activeTab === 'categories' && (
-          <div className="card p-6">
+          <div className="bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark shadow-sm p-6">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold">Değerlendirme Kategorileri</h2>
               <button
@@ -283,7 +283,7 @@ export default function SettingsPage() {
                     <button
                       onClick={() => moveCategoryUp(index)}
                       disabled={index === 0}
-                      className="text-text-muted hover:text-accent disabled:opacity-30 disabled:cursor-not-allowed transition"
+                      className="text-text-light-secondary dark:text-text-dark-secondary hover:text-accent disabled:opacity-30 disabled:cursor-not-allowed transition"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                         <polyline points="18 15 12 9 6 15" />
@@ -292,7 +292,7 @@ export default function SettingsPage() {
                     <button
                       onClick={() => moveCategoryDown(index)}
                       disabled={index === settings.categories.length - 1}
-                      className="text-text-muted hover:text-accent disabled:opacity-30 disabled:cursor-not-allowed transition"
+                      className="text-text-light-secondary dark:text-text-dark-secondary hover:text-accent disabled:opacity-30 disabled:cursor-not-allowed transition"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                         <polyline points="6 9 12 15 18 9" />
@@ -303,7 +303,7 @@ export default function SettingsPage() {
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
                       <span className="font-medium text-lg">{category}</span>
-                      <span className="text-sm text-text-muted">#{index + 1}</span>
+                      <span className="text-sm text-text-light-secondary dark:text-text-dark-secondary">#{index + 1}</span>
                     </div>
                   </div>
 
@@ -327,7 +327,7 @@ export default function SettingsPage() {
 
         {/* Rules Tab */}
         {activeTab === 'rules' && (
-          <div className="card p-6">
+          <div className="bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark shadow-sm p-6">
             <h2 className="text-2xl font-bold mb-6">Değerlendirme Kuralları (0-1-2 Sistemi)</h2>
 
             <div className="space-y-6">
@@ -355,12 +355,12 @@ export default function SettingsPage() {
                   onChange={(e) => setSettings({ ...settings, threshold: Number(e.target.value) })}
                   className="w-full"
                 />
-                <div className="flex justify-between text-xs text-text-muted mt-1">
+                <div className="flex justify-between text-xs text-text-light-secondary dark:text-text-dark-secondary mt-1">
                   <span>0.0</span>
                   <span>1.0</span>
                   <span>2.0</span>
                 </div>
-                <p className="text-sm text-text-muted mt-2">
+                <p className="text-sm text-text-light-secondary dark:text-text-dark-secondary mt-2">
                   Bu değerin üzerinde ortalamaya sahip çocuklar kazanım elde etmiş sayılır.
                 </p>
               </div>
@@ -389,7 +389,7 @@ export default function SettingsPage() {
                 {settings.vetoRule.enabled && (
                   <div className="space-y-3">
                     <div>
-                      <label className="block text-xs text-text-muted mb-1">
+                      <label className="block text-xs text-text-light-secondary dark:text-text-dark-secondary mb-1">
                         Kaç tane 0 varsa ödül alamaz?
                       </label>
                       <input
@@ -401,19 +401,19 @@ export default function SettingsPage() {
                           ...settings,
                           vetoRule: { ...settings.vetoRule, zeroCount: Number(e.target.value) }
                         })}
-                        className="w-full px-3 py-2 bg-background border border-input-border rounded-lg focus:ring-2 focus:ring-accent transition text-sm"
+                        className="w-full px-3 py-2 bg-background-light dark:bg-background-dark font-display border border-input-border rounded-lg focus:ring-2 focus:ring-primary transition text-sm"
                       />
                     </div>
                     <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded text-xs">
                       <strong>Örnek:</strong> {settings.vetoRule.zeroCount} veya daha fazla 0 varsa, ortalama ne olursa olsun kazanım sağlanamaz.
                       <br />
-                      <span className="text-text-muted">[2, 2, 1, 0, 0, 0] → Veto! Ortalama hesaplanır ama kazanım yok.</span>
+                      <span className="text-text-light-secondary dark:text-text-dark-secondary">[2, 2, 1, 0, 0, 0] → Veto! Ortalama hesaplanır ama kazanım yok.</span>
                     </div>
                   </div>
                 )}
 
                 {!settings.vetoRule.enabled && (
-                  <p className="text-xs text-text-muted">
+                  <p className="text-xs text-text-light-secondary dark:text-text-dark-secondary">
                     Veto kuralı kapalı. Tüm puanlar ortala hesaba dahil edilir.
                   </p>
                 )}
@@ -444,7 +444,7 @@ export default function SettingsPage() {
                   <div className="space-y-3">
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-xs text-text-muted mb-1">
+                        <label className="block text-xs text-text-light-secondary dark:text-text-dark-secondary mb-1">
                           Kaç tane {settings.cancelRule.highScore}
                         </label>
                         <input
@@ -456,11 +456,11 @@ export default function SettingsPage() {
                             ...settings,
                             cancelRule: { ...settings.cancelRule, highCount: Number(e.target.value) }
                           })}
-                          className="w-full px-3 py-2 bg-background border border-input-border rounded-lg focus:ring-2 focus:ring-accent transition text-sm"
+                          className="w-full px-3 py-2 bg-background-light dark:bg-background-dark font-display border border-input-border rounded-lg focus:ring-2 focus:ring-primary transition text-sm"
                         />
                       </div>
                       <div>
-                        <label className="block text-xs text-text-muted mb-1">
+                        <label className="block text-xs text-text-light-secondary dark:text-text-dark-secondary mb-1">
                           Kaç tane {settings.cancelRule.lowScore}'ı iptal eder
                         </label>
                         <input
@@ -472,14 +472,14 @@ export default function SettingsPage() {
                             ...settings,
                             cancelRule: { ...settings.cancelRule, lowCount: Number(e.target.value) }
                           })}
-                          className="w-full px-3 py-2 bg-background border border-input-border rounded-lg focus:ring-2 focus:ring-accent transition text-sm"
+                          className="w-full px-3 py-2 bg-background-light dark:bg-background-dark font-display border border-input-border rounded-lg focus:ring-2 focus:ring-primary transition text-sm"
                         />
                       </div>
                     </div>
                     <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded text-xs">
                       <strong>Örnek:</strong> {settings.cancelRule.highCount} tane {settings.cancelRule.highScore}, {settings.cancelRule.lowCount} tane {settings.cancelRule.lowScore}'ı iptal eder.
                       <br />
-                      <span className="text-text-muted">
+                      <span className="text-text-light-secondary dark:text-text-dark-secondary">
                         [2, 2, 1, 0] → İptal → [1] (2'ler ve 0 kaldırıldı) → Ortalama: 1.0
                       </span>
                     </div>
@@ -487,7 +487,7 @@ export default function SettingsPage() {
                 )}
 
                 {!settings.cancelRule.enabled && (
-                  <p className="text-xs text-text-muted">
+                  <p className="text-xs text-text-light-secondary dark:text-text-dark-secondary">
                     İptal kuralı kapalı. Puanlar birbirini iptal etmez.
                   </p>
                 )}
@@ -499,7 +499,7 @@ export default function SettingsPage() {
                 <div className="text-sm space-y-2">
                   <p>Puanlar: <code className="bg-black/20 px-2 py-1 rounded">[2, 2, 1, 1, 0, 0]</code></p>
                   {settings.cancelRule.enabled && (
-                    <p className="text-text-muted">
+                    <p className="text-text-light-secondary dark:text-text-dark-secondary">
                       İptal sonrası: <code className="bg-black/20 px-2 py-1 rounded">
                         [{Array(6 - settings.cancelRule.highCount - settings.cancelRule.lowCount).fill('1').join(', ')}]
                       </code>
@@ -540,7 +540,7 @@ export default function SettingsPage() {
 
         {/* Periods Tab */}
         {activeTab === 'periods' && (
-          <div className="card p-6">
+          <div className="bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark shadow-sm p-6">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold">Kazanım Periyotları</h2>
               <button
@@ -563,7 +563,7 @@ export default function SettingsPage() {
                 >
                   <div className="flex-1">
                     <div className="font-medium text-lg">{period.name}</div>
-                    <div className="text-sm text-text-muted">{period.days} gün</div>
+                    <div className="text-sm text-text-light-secondary dark:text-text-dark-secondary">{period.days} gün</div>
                   </div>
 
                   <button
@@ -582,7 +582,7 @@ export default function SettingsPage() {
               ))}
 
               {settings.periods.length === 0 && (
-                <div className="text-center py-8 text-text-muted">
+                <div className="text-center py-8 text-text-light-secondary dark:text-text-dark-secondary">
                   Henüz periyot eklenmedi. Yukarıdaki butona tıklayarak ekleyebilirsiniz.
                 </div>
               )}

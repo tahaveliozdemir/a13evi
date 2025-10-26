@@ -167,24 +167,25 @@ export default function EvaluationPage() {
     });
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background-light dark:bg-background-dark font-display">
       <div className="max-w-7xl mx-auto p-4 md:p-8">
         {/* Header with Date & Evaluator Info */}
-        <div className="card p-4 mb-6">
+        <div className="bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark rounded-xl p-4 mb-6 shadow-sm">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-6">
               <div>
-                <p className="text-sm text-text-muted">Tarih</p>
-                <p className="font-bold text-lg">{formatDate(selectedDate)}</p>
+                <p className="text-sm text-text-light-secondary dark:text-text-dark-secondary">Tarih</p>
+                <p className="font-bold text-lg text-text-light-primary dark:text-text-dark-primary">{formatDate(selectedDate)}</p>
               </div>
+              <div className="h-10 w-px bg-border-light dark:bg-border-dark"></div>
               <div>
-                <p className="text-sm text-text-muted">Değerlendiren</p>
-                <p className="font-bold text-lg">{selectedEvaluator}</p>
+                <p className="text-sm text-text-light-secondary dark:text-text-dark-secondary">Değerlendiren</p>
+                <p className="font-bold text-lg text-text-light-primary dark:text-text-dark-primary">{selectedEvaluator}</p>
               </div>
             </div>
             <button
               onClick={handleChangeDate}
-              className="bg-gray-500/20 hover:bg-gray-500/30 px-4 py-2 rounded-lg font-medium transition"
+              className="bg-yaban-mid/20 hover:bg-yaban-mid/30 border border-yaban-mid px-4 py-2 rounded-lg font-medium transition text-text-light-primary dark:text-text-dark-primary"
             >
               Tarih/İsim Değiştir
             </button>
@@ -196,12 +197,9 @@ export default function EvaluationPage() {
           <div className="mb-6">
             <button
               onClick={() => setShowAddChildModal(true)}
-              className="w-full md:w-auto bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition flex items-center justify-center gap-2"
+              className="w-full md:w-auto bg-primary hover:bg-primary/80 text-white font-bold py-3 px-6 rounded-lg shadow-sm transition flex items-center justify-center gap-2"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                <line x1="12" y1="5" x2="12" y2="19" />
-                <line x1="5" y1="12" x2="19" y2="12" />
-              </svg>
+              <span className="material-symbols-outlined text-xl">add</span>
               Yeni Çocuk Ekle
             </button>
           </div>
@@ -209,17 +207,20 @@ export default function EvaluationPage() {
 
         {/* Search, Sort & Archive Filter */}
         <div className="flex flex-col md:flex-row gap-4 mb-6">
-          <input
-            type="search"
-            placeholder="Çocuk ara..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="flex-1 px-4 py-3 bg-input-bg border border-input-border rounded-lg focus:ring-2 focus:ring-accent transition"
-          />
+          <div className="flex-1 relative">
+            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-text-light-secondary dark:text-text-dark-secondary">search</span>
+            <input
+              type="search"
+              placeholder="Çocuk ara..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-3 bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark rounded-lg focus:ring-2 focus:ring-primary transition text-text-light-primary dark:text-text-dark-primary placeholder:text-text-light-secondary dark:placeholder:text-text-dark-secondary"
+            />
+          </div>
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
-            className="px-4 py-3 bg-input-bg border border-input-border rounded-lg focus:ring-2 focus:ring-accent transition w-full md:w-auto"
+            className="px-4 py-3 bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark rounded-lg focus:ring-2 focus:ring-primary transition w-full md:w-auto text-text-light-primary dark:text-text-dark-primary"
           >
             <option value="az">Alfabetik (A-Z)</option>
             <option value="za">Alfabetik (Z-A)</option>
@@ -229,14 +230,12 @@ export default function EvaluationPage() {
               onClick={() => setShowArchived(!showArchived)}
               className={`px-4 py-3 rounded-lg font-medium transition flex items-center justify-center gap-2 w-full md:w-auto ${
                 showArchived
-                  ? 'bg-accent text-white'
-                  : 'bg-gray-500/20 hover:bg-gray-500/30'
+                  ? 'bg-primary text-white'
+                  : 'bg-yaban-mid/20 hover:bg-yaban-mid/30 border border-yaban-mid text-text-light-primary dark:text-text-dark-primary'
               }`}
               title={showArchived ? 'Arşivlileri gizle' : 'Arşivlileri göster'}
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-              </svg>
+              <span className="material-symbols-outlined text-xl">inventory_2</span>
               {showArchived ? 'Arşiv: Açık' : 'Arşiv: Kapalı'}
             </button>
           )}
@@ -245,8 +244,10 @@ export default function EvaluationPage() {
         {/* Children List */}
         <div className="space-y-6">
           {filteredChildren.length === 0 ? (
-            <div className="card p-8 text-center">
-              <p className="text-text-muted">Çocuk bulunamadı.</p>
+            <div className="bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark rounded-xl p-12 text-center shadow-sm">
+              <span className="material-symbols-outlined text-6xl text-text-light-secondary dark:text-text-dark-secondary mb-4 block">search_off</span>
+              <p className="text-text-light-secondary dark:text-text-dark-secondary text-lg">Çocuk bulunamadı</p>
+              <p className="text-text-light-secondary dark:text-text-dark-secondary text-sm mt-2">Arama terimini değiştirip tekrar deneyin</p>
             </div>
           ) : (
             filteredChildren.map(child => (
@@ -282,7 +283,7 @@ export default function EvaluationPage() {
           <button
             onClick={handleSave}
             disabled={saving}
-            className="fixed bottom-8 right-8 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-4 px-8 rounded-lg shadow-2xl transition flex items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed z-50"
+            className="fixed bottom-8 right-8 bg-primary hover:bg-primary/90 text-white font-bold py-4 px-8 rounded-xl shadow-2xl transition flex items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed z-50 animate-slideUp"
           >
             {saving ? (
               <>
@@ -291,10 +292,7 @@ export default function EvaluationPage() {
               </>
             ) : (
               <>
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                  <path d="m9 12 2 2 4-4" />
-                  <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
-                </svg>
+                <span className="material-symbols-outlined text-2xl">save</span>
                 Tüm Değişiklikleri Kaydet
               </>
             )}
