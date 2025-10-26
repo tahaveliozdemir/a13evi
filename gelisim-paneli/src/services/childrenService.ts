@@ -1,15 +1,17 @@
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, onSnapshot, type Unsubscribe } from 'firebase/firestore';
 import { db } from './firebase';
 import type { Child } from '../types';
+import { retryAsync } from '../utils/retryUtils';
 
 const CHILDREN_DOC = 'score_tracker_data/main_data_document';
 
 /**
- * Get all children data from Firestore
- * NO WEBSOCKET - Uses regular get()
+ * Get all children data from Firestore (ONE-TIME READ)
+ * For initial load or when real-time updates are not needed
+ * Includes automatic retry mechanism for transient failures
  */
 export async function getChildren(): Promise<Child[]> {
-  try {
+  return retryAsync(async () => {
     const docRef = doc(db, CHILDREN_DOC);
     const docSnap = await getDoc(docRef);
 
@@ -19,24 +21,62 @@ export async function getChildren(): Promise<Child[]> {
     }
 
     return [];
-  } catch (error) {
-    console.error('Error fetching children:', error);
-    throw error;
-  }
+  }, {
+    maxAttempts: 3,
+    initialDelay: 1000,
+  });
+}
+
+/**
+ * Subscribe to real-time children updates via WSS (Secure WebSocket)
+ * Returns unsubscribe function to clean up listener
+ *
+ * @param onUpdate - Callback fired when data changes (real-time)
+ * @param onError - Optional error handler
+ * @returns Unsubscribe function
+ */
+export function subscribeToChildren(
+  onUpdate: (children: Child[]) => void,
+  onError?: (error: Error) => void
+): Unsubscribe {
+  const docRef = doc(db, CHILDREN_DOC);
+
+  const unsubscribe = onSnapshot(
+    docRef,
+    (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        onUpdate(data.children || []);
+      } else {
+        onUpdate([]);
+      }
+    },
+    (error) => {
+      console.error('Error in children subscription:', error);
+      if (onError) {
+        onError(error as Error);
+      }
+    }
+  );
+
+  console.log('🔌 WSS Connected: Real-time children sync active');
+  return unsubscribe;
 }
 
 /**
  * Save children data to Firestore
- * NO WEBSOCKET - Uses regular setDoc()
+ * Changes will be automatically pushed to all connected clients via WSS
+ * Includes automatic retry mechanism for transient failures
  */
 export async function saveChildren(children: Child[]): Promise<void> {
-  try {
+  return retryAsync(async () => {
     const docRef = doc(db, CHILDREN_DOC);
     await setDoc(docRef, { children }, { merge: true });
-  } catch (error) {
-    console.error('Error saving children:', error);
-    throw error;
-  }
+    console.log('💾 Data saved - Broadcasting to all clients via WSS');
+  }, {
+    maxAttempts: 3,
+    initialDelay: 1000,
+  });
 }
 
 /**

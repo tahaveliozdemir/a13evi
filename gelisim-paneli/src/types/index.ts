@@ -53,11 +53,39 @@ export interface AppSettings {
   cancelThreshold?: number;
 }
 
-// User & Auth
+// User & Auth - Enhanced Role System
+export type UserRoleType = 'viewer' | 'staff' | 'moderator' | 'admin' | 'superadmin';
+
+export type Permission =
+  | 'read_dashboard'
+  | 'read_evaluations'
+  | 'read_children'
+  | 'create_evaluation'
+  | 'update_evaluation'
+  | 'delete_evaluation'
+  | 'approve_evaluation'
+  | 'manage_children'
+  | 'manage_settings'
+  | 'manage_users'
+  | 'view_audit_logs'
+  | 'manage_backups';
+
+export interface UserProfile {
+  uid: string;
+  email: string | null;
+  role: UserRoleType;
+  displayName?: string;
+  createdAt: string;
+  updatedAt: string;
+  assignedBy?: string; // UID of the admin who assigned the role
+  permissions?: Permission[];
+  isActive?: boolean;
+}
+
 export interface UserRole {
   uid: string;
   email: string | null;
-  role: 'admin' | 'staff' | 'viewer';
+  role: UserRoleType;
   displayName?: string;
 }
 
@@ -65,7 +93,23 @@ export interface AuthUser {
   uid: string;
   email: string | null;
   isAnonymous: boolean;
-  role?: 'admin' | 'staff' | 'viewer';
+  role?: UserRoleType;
+}
+
+// Audit Log
+export interface AuditLog {
+  id: string;
+  action: 'role_changed' | 'user_created' | 'user_deleted' | 'settings_updated' | 'evaluation_approved' | 'evaluation_rejected' | 'child_added' | 'child_deleted';
+  performedBy: string; // UID
+  performedByEmail?: string;
+  targetUser?: string; // UID (for user-related actions)
+  targetUserEmail?: string;
+  details?: {
+    oldRole?: UserRoleType;
+    newRole?: UserRoleType;
+    [key: string]: any;
+  };
+  timestamp: string;
 }
 
 // Statistics

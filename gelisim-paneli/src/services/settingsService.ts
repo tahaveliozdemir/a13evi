@@ -1,6 +1,7 @@
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, onSnapshot, type Unsubscribe } from 'firebase/firestore';
 import { db } from './firebase';
 import type { AppSettings } from '../types';
+import { retryAsync } from '../utils/retryUtils';
 
 const SETTINGS_DOC = 'settings/app_config';
 
@@ -30,11 +31,12 @@ const defaultSettings: AppSettings = {
 };
 
 /**
- * Get app settings from Firestore
- * NO WEBSOCKET - Uses regular get()
+ * Get app settings from Firestore (ONE-TIME READ)
+ * For initial load or when real-time updates are not needed
+ * Includes automatic retry mechanism for transient failures
  */
 export async function getSettings(): Promise<AppSettings> {
-  try {
+  return retryAsync(async () => {
     const docRef = doc(db, SETTINGS_DOC);
     const docSnap = await getDoc(docRef);
 
@@ -45,24 +47,70 @@ export async function getSettings(): Promise<AppSettings> {
     // If no settings exist, create default
     await setDoc(docRef, defaultSettings);
     return defaultSettings;
-  } catch (error) {
-    console.error('Error fetching settings:', error);
+  }, {
+    maxAttempts: 3,
+    initialDelay: 1000,
+  }).catch((error) => {
+    console.error('Error fetching settings after retries:', error);
     return defaultSettings;
-  }
+  });
+}
+
+/**
+ * Subscribe to real-time settings updates via WSS (Secure WebSocket)
+ * Returns unsubscribe function to clean up listener
+ *
+ * @param onUpdate - Callback fired when settings change (real-time)
+ * @param onError - Optional error handler
+ * @returns Unsubscribe function
+ */
+export function subscribeToSettings(
+  onUpdate: (settings: AppSettings) => void,
+  onError?: (error: Error) => void
+): Unsubscribe {
+  const docRef = doc(db, SETTINGS_DOC);
+
+  const unsubscribe = onSnapshot(
+    docRef,
+    async (docSnap) => {
+      if (docSnap.exists()) {
+        const settings = { ...defaultSettings, ...docSnap.data() } as AppSettings;
+        onUpdate(settings);
+      } else {
+        // If no settings exist, create default
+        await setDoc(docRef, defaultSettings);
+        onUpdate(defaultSettings);
+      }
+    },
+    (error) => {
+      console.error('Error in settings subscription:', error);
+      if (onError) {
+        onError(error as Error);
+      } else {
+        // Fallback to default settings on error
+        onUpdate(defaultSettings);
+      }
+    }
+  );
+
+  console.log('🔌 WSS Connected: Real-time settings sync active');
+  return unsubscribe;
 }
 
 /**
  * Save app settings to Firestore
- * NO WEBSOCKET - Uses regular setDoc()
+ * Changes will be automatically pushed to all connected clients via WSS
+ * Includes automatic retry mechanism for transient failures
  */
 export async function saveSettings(settings: AppSettings): Promise<void> {
-  try {
+  return retryAsync(async () => {
     const docRef = doc(db, SETTINGS_DOC);
     await setDoc(docRef, settings, { merge: true });
-  } catch (error) {
-    console.error('Error saving settings:', error);
-    throw error;
-  }
+    console.log('💾 Settings saved - Broadcasting to all clients via WSS');
+  }, {
+    maxAttempts: 3,
+    initialDelay: 1000,
+  });
 }
 
 /**
