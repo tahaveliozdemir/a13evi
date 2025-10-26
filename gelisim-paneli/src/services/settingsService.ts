@@ -8,6 +8,7 @@ const SETTINGS_DOC = 'settings/app_config';
 // Default settings for NEW SYSTEM (0-1-2)
 const defaultSettings: AppSettings = {
   categories: ['Kişisel Görevler', 'Ortak Alan', 'Eğitim', 'Genel Tutum'],
+  units: [], // Birimler - admin tarafından yapılandırılabilir
   threshold: 1.5, // Kazanım eşiği (0.0 - 2.0 arası)
   scoreSystem: {
     min: 0,

@@ -58,6 +58,7 @@ export function migrateSettings(oldSettings: AppSettings): AppSettings {
   // Create new settings with defaults
   const newSettings: AppSettings = {
     categories: oldSettings.categories,
+    units: oldSettings.units || [], // Preserve existing units or use empty array
     threshold: 1.5, // New default threshold for 0-2 system
     scoreSystem: {
       min: 0,
