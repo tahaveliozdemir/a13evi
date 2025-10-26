@@ -1,4 +1,5 @@
-import { useToast } from '../contexts/ToastContext';
+import { useState, useEffect } from 'react';
+import { useToast, type Toast } from '../contexts/ToastContext';
 
 const TOAST_ICONS = {
   success: (
@@ -30,34 +31,78 @@ const TOAST_STYLES = {
   info: 'bg-blue-500 text-white'
 };
 
+function ToastItem({ toast, onRemove }: { toast: Toast; onRemove: () => void }) {
+  const [progress, setProgress] = useState(100);
+  const [isDismissed, setIsDismissed] = useState(false);
+  const duration = toast.duration || 4000;
+
+  useEffect(() => {
+    const startTime = Date.now();
+    const updateInterval = 50; // Update every 50ms
+
+    const timer = setInterval(() => {
+      const elapsed = Date.now() - startTime;
+      const remaining = Math.max(0, 100 - (elapsed / duration) * 100);
+      setProgress(remaining);
+
+      if (remaining === 0) {
+        clearInterval(timer);
+      }
+    }, updateInterval);
+
+    return () => clearInterval(timer);
+  }, [duration]);
+
+  const handleDismiss = () => {
+    setIsDismissed(true);
+    setTimeout(onRemove, 300); // Wait for animation
+  };
+
+  return (
+    <div
+      className={`
+        ${TOAST_STYLES[toast.type]}
+        pointer-events-auto
+        flex flex-col rounded-lg shadow-2xl
+        min-w-[300px] max-w-md
+        overflow-hidden
+        transition-all duration-300
+        ${isDismissed ? 'opacity-0 translate-x-full scale-95' : 'animate-slideInRight'}
+      `}
+    >
+      <div className="flex items-center gap-3 px-4 py-3">
+        <div className="flex-shrink-0">
+          {TOAST_ICONS[toast.type]}
+        </div>
+        <p className="flex-1 font-medium text-sm">{toast.message}</p>
+        <button
+          onClick={handleDismiss}
+          className="flex-shrink-0 hover:bg-white/20 rounded p-1 transition"
+          aria-label="Kapat"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      {/* Progress bar */}
+      <div className="h-1 bg-white/20">
+        <div
+          className="h-full bg-white/50 transition-all duration-50 ease-linear"
+          style={{ width: `${progress}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
 export default function ToastContainer() {
   const { toasts, removeToast } = useToast();
 
   return (
     <div className="fixed bottom-4 right-4 z-[200] space-y-2 pointer-events-none">
       {toasts.map(toast => (
-        <div
-          key={toast.id}
-          className={`
-            ${TOAST_STYLES[toast.type]}
-            pointer-events-auto
-            flex items-center gap-3 px-4 py-3 rounded-lg shadow-2xl
-            animate-scaleIn min-w-[300px] max-w-md
-          `}
-        >
-          <div className="flex-shrink-0">
-            {TOAST_ICONS[toast.type]}
-          </div>
-          <p className="flex-1 font-medium text-sm">{toast.message}</p>
-          <button
-            onClick={() => removeToast(toast.id)}
-            className="flex-shrink-0 hover:bg-white/20 rounded p-1 transition"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
+        <ToastItem key={toast.id} toast={toast} onRemove={() => removeToast(toast.id)} />
       ))}
     </div>
   );
