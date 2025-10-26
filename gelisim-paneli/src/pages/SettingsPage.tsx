@@ -15,7 +15,7 @@ export default function SettingsPage() {
   const [settings, setSettings] = useState<AppSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState<'categories' | 'rules' | 'periods'>('categories');
+  const [activeTab, setActiveTab] = useState<'categories' | 'units' | 'rules' | 'periods'>('categories');
 
   // Modal states
   const [categoryModal, setCategoryModal] = useState<{
@@ -39,9 +39,16 @@ export default function SettingsPage() {
     initialName?: string;
   }>({ isOpen: false, days: 0 });
 
+  const [unitModal, setUnitModal] = useState<{
+    isOpen: boolean;
+    mode: 'add' | 'edit';
+    index?: number;
+    initialValue?: string;
+  }>({ isOpen: false, mode: 'add' });
+
   const [deleteModal, setDeleteModal] = useState<{
     isOpen: boolean;
-    type: 'category' | 'period';
+    type: 'category' | 'period' | 'unit';
     index: number;
     name: string;
   }>({ isOpen: false, type: 'category', index: 0, name: '' });
@@ -195,6 +202,46 @@ export default function SettingsPage() {
     showToast('Periyot silindi!', 'success');
   };
 
+  // Unit Management
+  const handleUnitSubmit = (value: string) => {
+    if (!settings) return;
+
+    const newUnit = {
+      id: Date.now().toString(),
+      name: value
+    };
+
+    if (unitModal.mode === 'add') {
+      setSettings({
+        ...settings,
+        units: [...(settings.units || []), newUnit]
+      });
+      showToast('Birim eklendi!', 'success');
+    } else if (unitModal.index !== undefined) {
+      const newUnits = [...(settings.units || [])];
+      newUnits[unitModal.index] = {
+        ...newUnits[unitModal.index],
+        name: value
+      };
+      setSettings({
+        ...settings,
+        units: newUnits
+      });
+      showToast('Birim güncellendi!', 'success');
+    }
+  };
+
+  const handleDeleteUnit = () => {
+    if (!settings || deleteModal.type !== 'unit') return;
+
+    const newUnits = (settings.units || []).filter((_, i) => i !== deleteModal.index);
+    setSettings({
+      ...settings,
+      units: newUnits
+    });
+    showToast('Birim silindi!', 'success');
+  };
+
   if (loading) {
     return <LoadingSpinner />;
   }
@@ -232,6 +279,16 @@ export default function SettingsPage() {
               }`}
             >
               Kategoriler
+            </button>
+            <button
+              onClick={() => setActiveTab('units')}
+              className={`flex-1 py-3 px-2 sm:px-4 rounded-lg font-medium text-sm sm:text-base transition ${
+                activeTab === 'units'
+                  ? 'bg-accent text-white'
+                  : 'bg-transparent hover:bg-gray-500/10'
+              }`}
+            >
+              Birimler
             </button>
             <button
               onClick={() => setActiveTab('rules')}
@@ -322,6 +379,60 @@ export default function SettingsPage() {
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* Units Tab */}
+        {activeTab === 'units' && (
+          <div className="card p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold">Birimler</h2>
+              <button
+                onClick={() => setUnitModal({ isOpen: true, mode: 'add' })}
+                className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg font-medium transition flex items-center gap-2"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+                Birim Ekle
+              </button>
+            </div>
+
+            {(settings.units || []).length === 0 ? (
+              <div className="text-center py-12 text-text-muted">
+                <p className="mb-2">Henüz birim eklenmedi</p>
+                <p className="text-sm">Değerlendirme yapacak personelin hangi birimi değerlendireceğini seçebilmesi için birim ekleyin</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {(settings.units || []).map((unit, index) => (
+                  <div
+                    key={unit.id}
+                    className="flex items-center gap-3 p-4 bg-input-bg rounded-lg border border-input-border"
+                  >
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-lg">{unit.name}</span>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => setUnitModal({ isOpen: true, mode: 'edit', index, initialValue: unit.name })}
+                      className="bg-blue-500/20 hover:bg-blue-500/30 text-blue-600 dark:text-blue-400 px-3 py-1.5 rounded-lg font-medium transition"
+                    >
+                      Düzenle
+                    </button>
+                    <button
+                      onClick={() => setDeleteModal({ isOpen: true, type: 'unit', index, name: unit.name })}
+                      className="bg-red-500/20 hover:bg-red-500/30 text-red-600 dark:text-red-400 px-3 py-1.5 rounded-lg font-medium transition"
+                    >
+                      Sil
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -663,12 +774,43 @@ export default function SettingsPage() {
           maxLength={50}
         />
 
+        <InputModal
+          isOpen={unitModal.isOpen}
+          onClose={() => setUnitModal({ isOpen: false, mode: 'add' })}
+          onConfirm={handleUnitSubmit}
+          title={unitModal.mode === 'add' ? 'Yeni Birim Ekle' : 'Birim Düzenle'}
+          placeholder="Örn: Merkez Okul"
+          initialValue={unitModal.initialValue}
+          validate={(value) => {
+            if ((settings?.units || []).some((u, i) => u.name === value && i !== unitModal.index)) {
+              return 'Bu birim zaten mevcut';
+            }
+            if (value.length < 2) {
+              return 'Birim adı en az 2 karakter olmalı';
+            }
+            return null;
+          }}
+          maxLength={50}
+        />
+
         <ConfirmationModal
           isOpen={deleteModal.isOpen}
           onClose={() => setDeleteModal({ isOpen: false, type: 'category', index: 0, name: '' })}
-          onConfirm={deleteModal.type === 'category' ? handleDeleteCategory : handleDeletePeriod}
-          title={deleteModal.type === 'category' ? 'Kategori Sil' : 'Periyot Sil'}
-          message={`"${deleteModal.name}" ${deleteModal.type === 'category' ? 'kategorisini' : 'periyodunu'} silmek istediğinizden emin misiniz?`}
+          onConfirm={
+            deleteModal.type === 'category' ? handleDeleteCategory :
+            deleteModal.type === 'period' ? handleDeletePeriod :
+            handleDeleteUnit
+          }
+          title={
+            deleteModal.type === 'category' ? 'Kategori Sil' :
+            deleteModal.type === 'period' ? 'Periyot Sil' :
+            'Birim Sil'
+          }
+          message={`"${deleteModal.name}" ${
+            deleteModal.type === 'category' ? 'kategorisini' :
+            deleteModal.type === 'period' ? 'periyodunu' :
+            'birimini'
+          } silmek istediğinizden emin misiniz?`}
           variant="danger"
           confirmText="Evet, Sil"
         />

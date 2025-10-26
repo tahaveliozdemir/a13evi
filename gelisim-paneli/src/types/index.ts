@@ -1,7 +1,13 @@
 // Child & Scores
+export interface Unit {
+  id: string;
+  name: string;
+}
+
 export interface ScoreEntry {
   date: string;
   evaluator: string;
+  unit?: string; // Birim/Unit name
   s1?: number; // Score for category 1
   s2?: number; // Score for category 2
   s3?: number; // Score for category 3
@@ -38,6 +44,7 @@ export interface CancelRule {
 
 export interface AppSettings {
   categories: string[];
+  units: Unit[]; // Birimler/Units
   threshold: number; // Kazanım eşiği (0.0 - 2.0 arası, varsayılan: 1.5)
   scoreSystem: {
     min: number; // Minimum puan (varsayılan: 0)

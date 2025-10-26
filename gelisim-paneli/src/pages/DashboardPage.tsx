@@ -29,12 +29,13 @@ export default function DashboardPage() {
     setShowEvaluatorModal(true);
   };
 
-  const handleEvaluatorSubmit = (evaluatorName: string) => {
+  const handleEvaluatorSubmit = (evaluatorName: string, unit?: string) => {
     setShowEvaluatorModal(false);
     navigate('/evaluation', {
       state: {
         date: selectedDate,
-        evaluator: evaluatorName
+        evaluator: evaluatorName,
+        unit: unit
       }
     });
   };
@@ -371,6 +372,7 @@ export default function DashboardPage() {
           setShowDateModal(true);
         }}
         onSubmit={handleEvaluatorSubmit}
+        units={settings?.units || []}
       />
     </div>
   );
