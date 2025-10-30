@@ -169,7 +169,10 @@ export default function EvaluationPage() {
   return (
     <div className="min-h-screen bg-background-light dark:bg-background-dark font-display">
       <div className="max-w-7xl mx-auto p-4 md:p-8">
-
+        {/* Header with Date & Evaluator Info */}
+        <div className="bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark rounded-xl p-4 mb-6 shadow-sm">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div className="flex items-center gap-6">
               <div>
                 <p className="text-sm text-text-light-secondary dark:text-text-dark-secondary">Tarih</p>
                 <p className="font-bold text-lg text-text-light-primary dark:text-text-dark-primary">{formatDate(selectedDate)}</p>
@@ -180,10 +183,13 @@ export default function EvaluationPage() {
                 <p className="font-bold text-lg text-text-light-primary dark:text-text-dark-primary">{selectedEvaluator}</p>
               </div>
               {selectedUnit && (
-                <div>
-                  <p className="text-sm text-text-muted">Birim</p>
-                  <p className="font-bold text-lg">{selectedUnit}</p>
-                </div>
+                <>
+                  <div className="h-10 w-px bg-border-light dark:bg-border-dark"></div>
+                  <div>
+                    <p className="text-sm text-text-light-secondary dark:text-text-dark-secondary">Birim</p>
+                    <p className="font-bold text-lg text-text-light-primary dark:text-text-dark-primary">{selectedUnit}</p>
+                  </div>
+                </>
               )}
             </div>
             <button
