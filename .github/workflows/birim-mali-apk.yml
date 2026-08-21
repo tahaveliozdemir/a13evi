@@ -6,6 +6,11 @@ on:
     paths:
       - "android-apk/**"
       - ".github/workflows/birim-mali-apk.yml"
+  pull_request:
+    branches: ["main"]
+    paths:
+      - "android-apk/**"
+      - ".github/workflows/birim-mali-apk.yml"
   workflow_dispatch:
 
 jobs:
